@@ -1,0 +1,1549 @@
+---
+  title: "Do GAM to predict Skipjack Tuna biomass from key environmental variables"
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+  markdown: 
+    wrap: 72
+---
+
+For quantifying the effect size and direction, we consider a Generalized Additive Model (GAM) approach. This allows us to interpret the coefficients and explanatory power of the parameters, including linear and nonlinear effects.
+
+```{r setup, include=FALSE}
+
+## 1) remove all objects (incl. hidden)
+rm(list = ls(all.names = TRUE))
+## 2) unload all non-base packages
+pkgs <- names(sessionInfo()$otherPkgs)
+if (length(pkgs)) sapply(paste0("package:", pkgs),
+                         detach, character.only = TRUE,
+                         unload = TRUE, force = TRUE)
+## 3) clear plots, console, connections, memory
+cat("\014")              # clear console in RStudio
+gc()
+
+
+```
+
+```{r}
+
+setwd("/g/data/es60/SEAPODYM/pearse_GAMs")
+list.files()
+
+```
+
+Load the dataframes and transform biomass
+
+```{r}
+
+abso <- read.table("/g/data/es60/SEAPODYM/pearse_GAMs/absolute_values_SEAPODYM_WCPO.txt", header = TRUE, sep = ",")
+anom <- read.table("/g/data/es60/SEAPODYM/pearse_GAMs/anomalous_values_SEAPODYM_WCPO.txt", header = TRUE, sep = ",")
+
+abso$larvae_biomass_TF <- log10(abs(abso$larvae_biomass)+1.0) * sign(abso$larvae_biomass)
+anom$larvae_biomass_TF <- log10(abs(anom$larvae_biomass)+1.0) * sign(anom$larvae_biomass)
+
+abso$juvenile_biomass_TF <- log10(abs(abso$juvenile_biomass)+1.0) * sign(abso$juvenile_biomass)
+anom$juvenile_biomass_TF <- log10(abs(anom$juvenile_biomass)+1.0) * sign(anom$juvenile_biomass)
+
+abso$adult_biomass_TF <- log10(abs(abso$adult_biomass)+1.0) * sign(abso$adult_biomass)
+anom$adult_biomass_TF <- log10(abs(anom$adult_biomass)+1.0) * sign(anom$adult_biomass)
+
+```
+
+Load libraries
+
+```{r}
+
+library(mgcv)
+library(parallel)
+
+```
+
+
+Create cluster for parallel
+
+```{r}
+
+if (exists("cl")) try(stopCluster(cl), silent = TRUE)
+
+cl <- makeCluster(28)      # or a bit fewer to leave headroom
+on.exit(stopCluster(cl), add = TRUE)
+length(cl)                 # should be 56
+
+
+```
+
+Load GAMs
+
+```{r}
+
+# Larvae
+gam_abso_larvaeTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_larvaeTF.rds")
+gam_anom_larvaeTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_larvaeTF.rds")
+
+# Juveniles
+gam_abso_juvenileTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_juvenileTF.rds")
+gam_abso_juvenileTF_allL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_juvenileTF_L.rds")
+gam_anom_juvenileTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_juvenileTF.rds")
+gam_anom_juvenileTF_allL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_juvenileTF_L.rds")
+gam_abso_juvenileTF_allpL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_juvenileTF_pL.rds")
+gam_anom_juvenileTF_allpL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_juvenileTF_pL.rds")
+
+# Adults
+gam_abso_adultTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_adultTF.rds")
+gam_abso_adultTF_allJ <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_adultTF_J.rds")
+gam_anom_adultTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_adultTF.rds")
+gam_anom_adultTF_allJ <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_adultTF_J.rds")
+gam_abso_adultTF_allpL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_adultTF_pJ.rds")
+gam_anom_adultTF_allpL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_adultTF_pJ.rds")
+
+```
+
+
+
+Build up a model from scratch, trying each of the individual predictors within the subset, and record R2
+
+1. start with a baseline that tries to predict anomalous tuna biomass from cyclic seasonality and space
+
+```{r}
+
+k1 <- 5
+
+### baseline
+anom$season_num <- match(anom$season, c("DJF", "MAM", "JJA", "SON"))
+anom$season_num <- ifelse(anom$season == "DJF", 1,
+                  ifelse(anom$season == "MAM", 2,
+                  ifelse(anom$season == "JJA", 3,
+                  ifelse(anom$season == "SON", 4, NA))))
+
+
+gam_anom_larvaeTF_baseline <- bam(
+  larvae_biomass_TF ~
+    # tamed spatial baseline
+    s(lon,lat, bs="ds", k = 200) +
+    # seasonality
+    s(season_num, bs="cc", k=4),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 1
+)
+summary(gam_anom_larvaeTF_baseline)
+
+gam_anom_juvenileTF_baseline <- bam(
+  juvenile_biomass_TF ~
+    # tamed spatial baseline
+    s(lon,lat, bs="ds", k = 200) +
+    # seasonality
+    s(season_num, bs="cc", k=4),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 1
+)
+summary(gam_anom_juvenileTF_baseline)
+
+gam_anom_adultTF_baseline <- bam(
+  adult_biomass_TF ~
+    # tamed spatial baseline
+    s(lon,lat, bs="ds", k = 200) +
+    # seasonality
+    s(season_num, bs="cc", k=4),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 1
+)
+summary(gam_anom_adultTF_baseline)
+
+```
+
+
+Larval absolute (lat,lon, season) = 71.3%
+Juvenile absolute (lat,lon, season) = 71.2%
+Adult absolute (lat,lon, season) = 64.8%
+
+
+Larval predictor importance, one at a time
+
+SST, NPP
+
+```{r}
+
+
+k1 <- 5
+
+gam_anom_larvaeTF_sst <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(sst, k = k1, bs = "ts") + ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_sst)
+
+gam_anom_larvaeTF_pp <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(pp, k = k1, bs = "ts") + ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_pp)
+
+gam_anom_larvaeTF_T_L1 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(T_L1, k = k1, bs = "ts") + ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_T_L1)
+
+gam_anom_larvaeTF_T_L2 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(T_L2, k = k1, bs = "ts") + ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_T_L2)
+
+gam_anom_larvaeTF_U_L1 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(U_L1, k = k1, bs = "ts") + ti(U_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_U_L1)
+
+gam_anom_larvaeTF_U_L2 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(U_L2, k = k1, bs = "ts") + ti(U_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_U_L2)
+
+gam_anom_larvaeTF_V_L1 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(V_L1, k = k1, bs = "ts") + ti(V_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_V_L1)
+
+gam_anom_larvaeTF_V_L2 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(V_L2, k = k1, bs = "ts") + ti(V_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_V_L2)
+
+gam_anom_larvaeTF_O2_L1 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(O2_L1, k = k1, bs = "ts") + ti(O2_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_O2_L1)
+
+gam_anom_larvaeTF_O2_L2 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(O2_L2, k = k1, bs = "ts") + ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_O2_L2)
+
+```
+
+
+Make functions for local seasonal climatology and skill assessment against this
+
+```{r}
+
+make_climatology <- function(data, response) {
+  tmp <- data.frame(lon = data$lon, lat = data$lat, season = data$season, y = data[[response]])
+  clim <- aggregate(y ~ lon + lat + season, data = tmp, FUN = mean, na.rm = TRUE)
+  names(clim)[4] <- "clim"
+  clim
+}
+
+clim_skill <- function(model, eval_data, climatology, response) {
+  pred <- predict(model, newdata = eval_data, type = "response")
+  key_clim <- paste(climatology$lon, climatology$lat, climatology$season, sep = "_")
+  key_eval <- paste(eval_data$lon, eval_data$lat, eval_data$season, sep = "_")
+  clim_pred <- climatology$clim[ match(key_eval, key_clim) ]
+  obs <- eval_data[[response]]
+  idx <- complete.cases(obs, pred, clim_pred)
+  SS_res <- sum((obs[idx] - pred[idx])^2)
+  SS_clim <- sum((obs[idx] - clim_pred[idx])^2)
+  1 - SS_res / SS_clim
+}
+
+```
+
+Do forward selection for larvae:
+
+```{r}
+
+k1 <- 5
+
+# vars: character vector of predictor names
+# k1:   your chosen k for the 1D smooths
+build_terms <- function(vars, k1) {
+  if (length(vars) == 0L) return(character(0))
+
+  g_terms  <- sprintf("s(%s, k=%s, bs='ts')", vars, k1)
+  ti_terms <- sprintf(
+    "ti(%s, lon, lat, bs=c('cr','tp','tp'), k=c(%s,120), m=2)",
+    vars, k1
+  )
+
+  c(g_terms, ti_terms)  # return all terms as a character vector
+}
+
+forward_gam_stepwise <- function(predictors,
+                                 preselected = NULL,   # e.g. "T_L1"
+                                 train_data,
+                                 eval_data,
+                                 baseline_terms,
+                                 response,
+                                 k1,
+                                 thresh = 0.01,        # 1 percentage point
+                                 verbose = TRUE,
+                                 ...) {
+
+  ## ---- set up selected / remaining ----
+  selected  <- unique(preselected)
+  remaining <- setdiff(predictors, selected)
+
+  ## Climatology calculated ONLY from training data
+  climatology <- make_climatology(train_data, response)
+
+  ## ---- fit baseline (+ preselected, if any) ----
+  rhs_terms <- c(baseline_terms, build_terms(selected, k1))
+  rhs <- paste(rhs_terms, collapse = " + ")
+  base_formula <- as.formula(paste(response, "~", rhs))
+
+  if (verbose) {
+    cat("Fitting starting model with:\n  ",
+        if (length(selected)) paste(selected, collapse = ", ") else "baseline only",
+        "\n")
+  }
+
+  best_model <- bam(base_formula, data = train_data, ...)
+  current_dev <- summary(best_model)$dev.expl
+  current_skill <- clim_skill(best_model, eval_data, climatology, response)
+
+  if (verbose)
+    cat("Starting climatology skill:", round(current_skill, 3), "\n")
+
+  trace <- data.frame(
+    step     = integer(0),
+    added    = character(0),
+    skill    = numeric(0),
+    delta    = numeric(0),
+    stringsAsFactors = FALSE
+  )
+
+  step <- 0L
+
+  ## ---- forward selection loop ----
+  repeat {
+    if (length(remaining) == 0L) {
+      if (verbose) cat("No predictors left.\n")
+      break
+    }
+
+    step <- step + 1L
+    if (verbose)
+      cat("\nStep", step, "- testing", length(remaining),
+          "candidate predictors\n")
+
+    best_var_step <- NULL
+    best_skill_step <- current_skill
+    best_model_step <- NULL
+
+    ## test each remaining predictor
+    for (v in remaining) {
+      rhs_terms_v <- c(
+        baseline_terms,
+        build_terms(selected, k1),
+        build_terms(v, k1)
+      )
+      rhs_v <- paste(rhs_terms_v, collapse = " + ")
+      f_v   <- as.formula(paste(response, "~", rhs_v))
+
+      m_v <- bam(f_v, data = train_data, ...)
+
+      dev_v <- summary(m_v)$dev.expl
+      skill_v <- clim_skill(m_v, eval_data, climatology, response)
+
+      if (verbose)
+        cat("  ", v, "-> skill =", round(skill_v, 3), "\n")
+
+      if (!is.na(skill_v) && skill_v > best_skill_step) {
+        best_skill_step <- skill_v
+        best_var_step <- v
+        best_model_step <- m_v
+      }
+
+      ## free memory from this candidate
+      rm(m_v); gc()
+    }
+
+    ## nothing improved?
+    delta <- best_skill_step - current_skill
+
+    if (is.null(best_var_step) || delta < thresh) {
+
+      if (verbose) {
+        cat("Best improvement <", thresh, "(Δ skill =", round(delta, 3),"). Stopping.\n")
+      }
+      break
+    }
+
+    ## accept the best candidate
+    selected    <- c(selected, best_var_step)
+    remaining   <- setdiff(remaining, best_var_step)
+    current_skill <- best_skill_step
+    best_model  <- best_model_step
+
+    trace <- rbind(trace, data.frame(
+      step     = step,
+      added    = best_var_step,
+      skill    = current_skill,
+      delta    = delta,
+      stringsAsFactors = FALSE
+    ))
+
+    if (verbose) {
+      cat("Selected:", best_var_step, "| skill =", round(current_skill, 3), "| Δ =", round(delta, 3), "\n")
+    }
+    rm(best_model_step); gc()
+  }
+
+  list(
+    selected    = selected,
+    trace       = trace,
+    final_model = best_model,
+    climatology = climatology,
+    validation_skill = current_skill
+  )
+}
+
+```
+
+
+```{r}
+
+
+### baseline
+anom$season_num <- match(anom$season, c("DJF", "MAM", "JJA", "SON"))
+anom$season_num <- ifelse(anom$season == "DJF", 1,
+                  ifelse(anom$season == "MAM", 2,
+                  ifelse(anom$season == "JJA", 3,
+                  ifelse(anom$season == "SON", 4, NA))))
+
+
+baseline_terms <- "s(lon,lat,bs='ds',k=200) + s(season_num,bs='cc',k=4)"
+
+predictors <- c(
+  "sst","pp",
+  "T_L1","T_L2",
+  "U_L1","U_L2",
+  "V_L1","V_L2",
+  "O2_L1","O2_L2"
+)
+
+# ============================================================
+# 80/20 temporal train-test split
+# ============================================================
+years <- sort(unique(anom$season_year))
+cut_year <- floor(0.8 * length(years))
+train_years <- years[1:cut_year]
+test_years  <- years[(cut_year + 1):length(years)]
+anom_train <- anom[ anom$season_year %in% train_years, ]
+anom_test <- anom[ anom$season_year %in% test_years, ]
+
+cat("Training years:", min(train_years), "-", max(train_years), "\n")
+cat("Testing years:", min(test_years), "-", max(test_years), "\n")
+cat("Training rows:", nrow(anom_train), "\n", "Testing rows:", nrow(anom_test), "\n")
+
+```
+
+
+```{r}
+
+# ============================================================
+# Forward selection
+#
+# Candidate GAMs are fitted to abso_train.
+# Candidate performance is evaluated on abso_test relative
+# to the lon × lat × season climatology from abso_train.
+# ============================================================
+
+res <- forward_gam_stepwise(
+  predictors     = predictors,
+  preselected    = "pp",
+  train_data     = anom_train,
+  eval_data      = anom_test,
+  baseline_terms = baseline_terms,
+  response       = "larvae_biomass_TF",
+  k1             = k1,
+  thresh         = 0.01,        # require ≥0.01 increase in climatology skill
+  method         = "fREML",
+  select         = TRUE,
+  cluster        = cl,
+  gc.level       = 2
+)
+
+res$selected
+res$trace
+res$validation_skill
+summary(res$final_model)
+
+
+```
+
+Juvenile predictor importance, one at a time
+
+SST, NPP
+
+```{r}
+
+
+k1 <- 5
+
+
+gam_anom_juvenileTF_sst <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(sst, k = k1, bs = "ts") + ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_sst)
+
+gam_anom_juvenileTF_pp <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(pp, k = k1, bs = "ts") + ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_pp)
+
+gam_anom_juvenileTF_T_L1 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(T_L1, k = k1, bs = "ts") + ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_T_L1)
+
+gam_anom_juvenileTF_T_L2 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(T_L2, k = k1, bs = "ts") + ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_T_L2)
+
+gam_anom_juvenileTF_U_L1 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(U_L1, k = k1, bs = "ts") + ti(U_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_U_L1)
+
+gam_anom_juvenileTF_U_L2 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(U_L2, k = k1, bs = "ts") + ti(U_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_U_L2)
+
+gam_anom_juvenileTF_V_L1 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(V_L1, k = k1, bs = "ts") + ti(V_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_V_L1)
+
+gam_anom_juvenileTF_V_L2 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(V_L2, k = k1, bs = "ts") + ti(V_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_V_L2)
+
+gam_anom_juvenileTF_O2_L1 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(O2_L1, k = k1, bs = "ts") + ti(O2_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_O2_L1)
+
+gam_anom_juvenileTF_O2_L2 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(O2_L2, k = k1, bs = "ts") + ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_O2_L2)
+
+```
+
+
+Juveniles forward selection
+
+```{r}
+
+
+# ============================================================
+# Forward selection
+#
+# Candidate GAMs are fitted to abso_train.
+# Candidate performance is evaluated on abso_test relative
+# to the lon × lat × season climatology from abso_train.
+# ============================================================
+
+res <- forward_gam_stepwise(
+  predictors     = predictors,
+  preselected    = "pp",
+  train_data     = anom_train,
+  eval_data      = anom_test,
+  baseline_terms = baseline_terms,
+  response       = "juvenile_biomass_TF",
+  k1             = k1,
+  thresh         = 0.01,        # require ≥0.01 increase in climatology skill
+  method         = "fREML",
+  select         = TRUE,
+  cluster        = cl,
+  gc.level       = 2
+)
+
+res$selected
+res$trace
+res$validation_skill
+summary(res$final_model)
+
+
+```
+
+Adult predictor importance, one at a time
+
+
+```{r}
+
+
+k1 <- 5
+
+gam_anom_adultTF_sst <- update(gam_anom_adultTF_baseline,
+                       . ~ . + s(sst, k = k1, bs = "ts") + ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_adultTF_sst)
+
+gam_anom_adultTF_pp <- update(gam_anom_adultTF_baseline,
+                       . ~ . + s(pp, k = k1, bs = "ts") + ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_adultTF_pp)
+
+gam_anom_adultTF_T_L1 <- update(gam_anom_adultTF_baseline,
+                       . ~ . + s(T_L1, k = k1, bs = "ts") + ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_adultTF_T_L1)
+
+gam_anom_adultTF_T_L2 <- update(gam_anom_adultTF_baseline,
+                       . ~ . + s(T_L2, k = k1, bs = "ts") + ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_adultTF_T_L2)
+
+gam_anom_adultTF_U_L1 <- update(gam_anom_adultTF_baseline,
+                       . ~ . + s(U_L1, k = k1, bs = "ts") + ti(U_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_adultTF_U_L1)
+
+gam_anom_adultTF_U_L2 <- update(gam_anom_adultTF_baseline,
+                       . ~ . + s(U_L2, k = k1, bs = "ts") + ti(U_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_adultTF_U_L2)
+
+gam_anom_adultTF_V_L1 <- update(gam_anom_adultTF_baseline,
+                       . ~ . + s(V_L1, k = k1, bs = "ts") + ti(V_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_adultTF_V_L1)
+
+gam_anom_adultTF_V_L2 <- update(gam_anom_adultTF_baseline,
+                       . ~ . + s(V_L2, k = k1, bs = "ts") + ti(V_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_adultTF_V_L2)
+
+gam_anom_adultTF_O2_L1 <- update(gam_anom_adultTF_baseline,
+                       . ~ . + s(O2_L1, k = k1, bs = "ts") + ti(O2_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_adultTF_O2_L1)
+
+gam_anom_adultTF_O2_L2 <- update(gam_anom_adultTF_baseline,
+                       . ~ . + s(O2_L2, k = k1, bs = "ts") + ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_adultTF_O2_L2)
+
+
+```
+
+
+```{r}
+
+# ============================================================
+# Forward selection
+#
+# Candidate GAMs are fitted to abso_train.
+# Candidate performance is evaluated on abso_test relative
+# to the lon × lat × season climatology from abso_train.
+# ============================================================
+
+res <- forward_gam_stepwise(
+  predictors     = predictors,
+  preselected    = "T_L1",
+  train_data     = anom_train,
+  eval_data      = anom_test,
+  baseline_terms = baseline_terms,
+  response       = "adult_biomass_TF",
+  k1             = k1,
+  thresh         = 0.01,        # require ≥0.01 increase in climatology skill
+  method         = "fREML",
+  select         = TRUE,
+  cluster        = cl,
+  gc.level       = 2
+)
+
+res$selected
+res$trace
+res$validation_skill
+summary(res$final_model)
+
+```
+
+
+Assess explanatory power of global versus local relationships
+
+
+```{r}
+
+gam_anom_adultTF_sstG <- update(gam_anom_adultTF_baseline,
+                       . ~ . + s(sst, k = k1, bs = "ts"))
+summary(gam_anom_adultTF_sstG)
+
+gam_anom_adultTF_sstV <- update(gam_anom_adultTF_baseline,
+                       . ~ . + ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_adultTF_sstV)
+
+gam_anom_adultTF_sst <- update(gam_anom_adultTF_baseline,
+                       . ~ . + s(sst, k = k1, bs = "ts") + ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_adultTF_sst)
+
+gam_anom_adultTF_ppG <- update(gam_anom_adultTF_baseline,
+                       . ~ . + s(pp, k = k1, bs = "ts"))
+summary(gam_anom_adultTF_ppG)
+
+gam_anom_adultTF_ppV <- update(gam_anom_adultTF_baseline,
+                       . ~ . + ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_adultTF_ppV)
+
+gam_anom_adultTF_pp <- update(gam_anom_adultTF_baseline,
+                       . ~ . + s(pp, k = k1, bs = "ts") + ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_adultTF_pp)
+
+
+```
+
+
+```{r}
+
+gam_anom_larvaeTF_FS1 <- bam(
+  larvae_biomass_TF ~
+    s(pp, k = k1, bs = "ts") +
+    s(sst, k = k1, bs = "ts") +
+    ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_larvaeTF_FS1)
+
+gam_anom_larvaeTF_FS2 <- bam(
+  larvae_biomass_TF ~
+    s(pp, k = k1, bs = "ts") +
+    s(sst, k = k1, bs = "ts") +
+    s(T_L1, k = k1, bs = "ts") +
+    ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_larvaeTF_FS2)
+
+gam_anom_larvaeTF_FS3 <- bam(
+  larvae_biomass_TF ~
+    s(pp, k = k1, bs = "ts") +
+    s(sst, k = k1, bs = "ts") +
+    s(T_L1, k = k1, bs = "ts") +
+    s(O2_L2, k = k1, bs = "ts") +
+    ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_larvaeTF_FS3)
+
+gam_anom_larvaeTF_FS1G <- bam(
+  larvae_biomass_TF ~
+    s(pp, k = k1, bs = "ts") +
+    s(sst, k = k1, bs = "ts"),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_larvaeTF_FS1G)
+
+gam_anom_larvaeTF_FS2G <- bam(
+  larvae_biomass_TF ~
+    s(pp, k = k1, bs = "ts") +
+    s(sst, k = k1, bs = "ts") +
+    s(T_L1, k = k1, bs = "ts"),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_larvaeTF_FS2G)
+
+gam_anom_larvaeTF_FS3G <- bam(
+  larvae_biomass_TF ~
+    s(pp, k = k1, bs = "ts") +
+    s(sst, k = k1, bs = "ts") +
+    s(T_L1, k = k1, bs = "ts") +
+    s(O2_L2, k = k1, bs = "ts"),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_larvaeTF_FS3G)
+
+gam_anom_larvaeTF_FS1V <- bam(
+  larvae_biomass_TF ~
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_larvaeTF_FS1V)
+
+gam_anom_larvaeTF_FS2V <- bam(
+  larvae_biomass_TF ~
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_larvaeTF_FS2V)
+
+gam_anom_larvaeTF_FS3V <- bam(
+  larvae_biomass_TF ~
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_larvaeTF_FS3V)
+
+```
+
+
+```{r}
+
+
+gam_anom_juvenileTF_FS1 <- bam(
+  juvenile_biomass_TF ~
+    s(pp, k = k1, bs = "ts") +
+    s(sst, k = k1, bs = "ts") +
+    ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_juvenileTF_FS1)
+
+gam_anom_juvenileTF_FS2 <- bam(
+  juvenile_biomass_TF ~
+    s(pp, k = k1, bs = "ts") +
+    s(sst, k = k1, bs = "ts") +
+    s(T_L1, k = k1, bs = "ts") +
+    ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_juvenileTF_FS2)
+
+gam_anom_juvenileTF_FS3 <- bam(
+  juvenile_biomass_TF ~
+    s(pp, k = k1, bs = "ts") +
+    s(sst, k = k1, bs = "ts") +
+    s(T_L1, k = k1, bs = "ts") +
+    s(O2_L2, k = k1, bs = "ts") +
+    ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_juvenileTF_FS3)
+
+
+gam_anom_juvenileTF_FS1G <- bam(
+  juvenile_biomass_TF ~
+    s(pp, k = k1, bs = "ts") +
+    s(sst, k = k1, bs = "ts"),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_juvenileTF_FS1G)
+
+gam_anom_juvenileTF_FS2G <- bam(
+  juvenile_biomass_TF ~
+    s(pp, k = k1, bs = "ts") +
+    s(sst, k = k1, bs = "ts") +
+    s(T_L1, k = k1, bs = "ts"),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_juvenileTF_FS2G)
+
+gam_anom_juvenileTF_FS3G <- bam(
+  juvenile_biomass_TF ~
+    s(pp, k = k1, bs = "ts") +
+    s(sst, k = k1, bs = "ts") +
+    s(T_L1, k = k1, bs = "ts") +
+    s(O2_L2, k = k1, bs = "ts"),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_juvenileTF_FS3G)
+
+gam_anom_juvenileTF_FS1V <- bam(
+  juvenile_biomass_TF ~
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_juvenileTF_FS1V)
+
+gam_anom_juvenileTF_FS2V <- bam(
+  juvenile_biomass_TF ~
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_juvenileTF_FS2V)
+
+gam_anom_juvenileTF_FS3V <- bam(
+  juvenile_biomass_TF ~
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_juvenileTF_FS3V)
+
+
+```
+
+```{r}
+
+
+gam_anom_adultTF_FS1 <- bam(
+  adult_biomass_TF ~
+    s(sst, k = k1, bs = "ts") +
+    s(T_L1, k = k1, bs = "ts") +
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_adultTF_FS1)
+
+gam_anom_adultTF_FS2 <- bam(
+  adult_biomass_TF ~
+    s(sst, k = k1, bs = "ts") +
+    s(T_L1, k = k1, bs = "ts") +
+    s(O2_L2, k = k1, bs = "ts") +
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_adultTF_FS2)
+
+gam_anom_adultTF_FS3 <- bam(
+  adult_biomass_TF ~
+    s(sst, k = k1, bs = "ts") +
+    s(T_L1, k = k1, bs = "ts") +
+    s(T_L2, k = k1, bs = "ts") +
+    s(O2_L2, k = k1, bs = "ts") +
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_adultTF_FS3)
+
+gam_anom_adultTF_FS1G <- bam(
+  adult_biomass_TF ~
+    s(sst, k = k1, bs = "ts") +
+    s(T_L1, k = k1, bs = "ts"),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_adultTF_FS1G)
+
+gam_anom_adultTF_FS2G <- bam(
+  adult_biomass_TF ~
+    s(sst, k = k1, bs = "ts") +
+    s(T_L1, k = k1, bs = "ts") +
+    s(O2_L2, k = k1, bs = "ts"),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_adultTF_FS2G)
+
+gam_anom_adultTF_FS3G <- bam(
+  adult_biomass_TF ~
+    s(sst, k = k1, bs = "ts") +
+    s(T_L1, k = k1, bs = "ts") +
+    s(T_L2, k = k1, bs = "ts") +
+    s(O2_L2, k = k1, bs = "ts"),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_adultTF_FS3G)
+
+
+gam_anom_adultTF_FS1V <- bam(
+  adult_biomass_TF ~
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_adultTF_FS1V)
+
+gam_anom_adultTF_FS2V <- bam(
+  adult_biomass_TF ~
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_adultTF_FS2V)
+
+gam_anom_adultTF_FS3V <- bam(
+  adult_biomass_TF ~
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_adultTF_FS3V)
+
+```
+
+Save global effects to dataframes
+
+```{r}
+
+save_global_effect <- function(mod, data, var, n = 500, file) {
+  # build sequence over observed range
+  x_seq <- seq(min(data[[var]], na.rm = TRUE),
+               max(data[[var]], na.rm = TRUE),
+               length.out = n)
+
+  # template: repeat mean values for n rows
+  newdat <- data.frame(
+    lon        = rep(mean(data$lon, na.rm = TRUE), n),
+    lat        = rep(mean(data$lat, na.rm = TRUE), n),
+    season_num = rep(round(mean(data$season_num, na.rm = TRUE)), n),
+
+    pp    = rep(0.0, n),
+    sst   = rep(0.0, n),
+    T_L1  = rep(0.0, n),
+    O2_L2 = rep(0.0, n)
+  )
+
+  newdat[[var]] <- x_seq  # vary only this var
+
+  # get all term contributions + SEs
+  tt <- predict(mod, newdata = newdat, type = "terms", se.fit = TRUE)
+
+  # find the column name for s(var)
+  term_name <- paste0("s(", var, ")")
+  if (!term_name %in% colnames(tt$fit)) {
+    stop("Term ", term_name, " not found in model terms.")
+  }
+
+  out <- data.frame(
+    x      = x_seq,
+    effect = tt$fit[, term_name],
+    se     = tt$se.fit[, term_name]
+  )
+
+  write.csv(out, file, row.names = FALSE)
+  invisible(out)
+}
+
+
+save_global_effect(gam_anom_larvaeTF_FS3, anom, "pp",  file = "gam_larvae_FS3_global_pp.csv")
+save_global_effect(gam_anom_larvaeTF_FS3, anom, "sst",   file = "gam_larvae_FS3_global_sst.csv")
+save_global_effect(gam_anom_larvaeTF_FS3, anom, "T_L1", file = "gam_larvae_FS3_global_T_L1.csv")
+save_global_effect(gam_anom_larvaeTF_FS3, anom, "O2_L2",  file = "gam_larvae_FS3_global_O2_L2.csv")
+
+
+```
+
+Save global effects to dataframes
+
+```{r}
+
+save_global_effect <- function(mod, data, var, n = 500, file) {
+  # build sequence over observed range
+  x_seq <- seq(min(data[[var]], na.rm = TRUE),
+               max(data[[var]], na.rm = TRUE),
+               length.out = n)
+
+  # template: repeat mean values for n rows
+  newdat <- data.frame(
+    lon        = rep(mean(data$lon, na.rm = TRUE), n),
+    lat        = rep(mean(data$lat, na.rm = TRUE), n),
+    season_num = rep(round(mean(data$season_num, na.rm = TRUE)), n),
+
+    pp    = rep(0.0, n),
+    sst   = rep(0.0, n),
+    T_L1  = rep(0.0, n),
+    O2_L2 = rep(0.0, n)
+  )
+
+  newdat[[var]] <- x_seq  # vary only this var
+
+  # get all term contributions + SEs
+  tt <- predict(mod, newdata = newdat, type = "terms", se.fit = TRUE)
+
+  # find the column name for s(var)
+  term_name <- paste0("s(", var, ")")
+  if (!term_name %in% colnames(tt$fit)) {
+    stop("Term ", term_name, " not found in model terms.")
+  }
+
+  out <- data.frame(
+    x      = x_seq,
+    effect = tt$fit[, term_name],
+    se     = tt$se.fit[, term_name]
+  )
+
+  write.csv(out, file, row.names = FALSE)
+  invisible(out)
+}
+
+
+save_global_effect(gam_anom_juvenileTF_FS3, anom, "pp",  file = "gam_juvenile_FS3_global_pp.csv")
+save_global_effect(gam_anom_juvenileTF_FS3, anom, "sst",   file = "gam_juvenile_FS3_global_sst.csv")
+save_global_effect(gam_anom_juvenileTF_FS3, anom, "T_L1", file = "gam_juvenile_FS3_global_T_L1.csv")
+save_global_effect(gam_anom_juvenileTF_FS3, anom, "O2_L2",  file = "gam_juvenile_FS3_global_O2_L2.csv")
+
+
+```
+
+```{r}
+
+save_global_effect <- function(mod, data, var, n = 500, file) {
+  # build sequence over observed range
+  x_seq <- seq(min(data[[var]], na.rm = TRUE),
+               max(data[[var]], na.rm = TRUE),
+               length.out = n)
+
+  # template: repeat mean values for n rows
+  newdat <- data.frame(
+    lon        = rep(mean(data$lon, na.rm = TRUE), n),
+    lat        = rep(mean(data$lat, na.rm = TRUE), n),
+    season_num = rep(round(mean(data$season_num, na.rm = TRUE)), n),
+
+    T_L1  = rep(0.0, n),
+    sst   = rep(0.0, n),
+    O2_L2 = rep(0.0, n),
+    T_L2  = rep(0.0, n)
+  )
+
+  newdat[[var]] <- x_seq  # vary only this var
+
+  # get all term contributions + SEs
+  tt <- predict(mod, newdata = newdat, type = "terms", se.fit = TRUE)
+
+  # find the column name for s(var)
+  term_name <- paste0("s(", var, ")")
+  if (!term_name %in% colnames(tt$fit)) {
+    stop("Term ", term_name, " not found in model terms.")
+  }
+
+  out <- data.frame(
+    x      = x_seq,
+    effect = tt$fit[, term_name],
+    se     = tt$se.fit[, term_name]
+  )
+
+  write.csv(out, file, row.names = FALSE)
+  invisible(out)
+}
+
+
+save_global_effect(gam_anom_adultTF_FS3, anom, "T_L1",  file = "gam_adult_FS3_global_T_L1.csv")
+save_global_effect(gam_anom_adultTF_FS3, anom, "sst",   file = "gam_adult_FS3_global_sst.csv")
+save_global_effect(gam_anom_adultTF_FS3, anom, "O2_L2", file = "gam_adult_FS3_global_O2_L2.csv")
+save_global_effect(gam_anom_adultTF_FS3, anom, "T_L2",  file = "gam_adult_FS3_global_T_L2.csv")
+
+
+```
+
+
+Save the spatial effects
+
+```{r}
+
+save_spatial_effect_sd <- function(mod, data, var,
+                                   lon_n   = 110,
+                                   lat_n   = 40,
+                                   seasons = 1:4,
+                                   delta   = NULL,
+                                   file) {
+
+  # use actual model grid, not seq(min,max,…)
+  lon_seq <- sort(unique(data$lon))
+  lat_seq <- sort(unique(data$lat))
+
+  grid <- expand.grid(
+    lon        = lon_seq,
+    lat        = lat_seq,
+    season_num = seasons
+  )
+
+  base <- transform(
+    grid,
+    pp    = 0.0,
+    sst   = 0.0,
+    T_L1  = 0.0,
+    O2_L2 = 0.0
+  )
+
+  if (is.null(delta)) {
+    # local SD over time per (lon,lat)
+    sd_loc <- stats::aggregate(
+      data[[var]],
+      by = list(lon = data$lon, lat = data$lat),
+      FUN = function(z) {
+        z <- z[is.finite(z)]
+        if (length(z) < 2L) {
+          NA_real_                  # land / too few data -> NA
+        } else {
+          stats::sd(z)
+        }
+      }
+    )
+    names(sd_loc)[3] <- "sd_var"
+
+    base <- merge(base, sd_loc, by = c("lon", "lat"), all.x = TRUE)
+  } else {
+    if (!is.finite(delta) || delta == 0) {
+      stop("Non-finite or zero user-specified delta for ", var)
+    }
+    base$sd_var <- rep(delta, nrow(base))
+  }
+
+  base_pred <- predict(mod, newdata = base, type = "response")
+
+  mults <- c(-2, -1, 1, 2)
+  out_list <- vector("list", length(mults))
+
+  for (i in seq_along(mults)) {
+    m <- mults[i]
+    delta_val <- m * base$sd_var       # NA on land, scalar elsewhere
+
+    pert <- base
+    pert[[var]] <- pert[[var]] + delta_val
+
+    pred_pert <- predict(mod, newdata = pert, type = "response")
+
+    out_list[[i]] <- data.frame(
+      lon         = base$lon,
+      lat         = base$lat,
+      season_num  = base$season_num,
+      delta_mult  = m,
+      delta_value = delta_val,
+      delta_eff   = pred_pert - base_pred
+    )
+  }
+
+  out <- do.call(rbind, out_list)
+  write.csv(out, file, row.names = FALSE)
+  invisible(out)
+}
+
+```
+
+
+```{r}
+
+save_spatial_effect_sd(gam_anom_larvaeTF_FS3, anom, "pp",  file = "gam_larvae_FS3_spatial_pp_sd.csv")
+save_spatial_effect_sd(gam_anom_larvaeTF_FS3, anom, "sst",   file = "gam_larvae_FS3_spatial_sst_sd.csv")
+save_spatial_effect_sd(gam_anom_larvaeTF_FS3, anom, "T_L1", file = "gam_larvae_FS3_spatial_T_L1_sd.csv")
+save_spatial_effect_sd(gam_anom_larvaeTF_FS3, anom, "O2_L2",  file = "gam_larvae_FS3_spatial_O2_L2_sd.csv")
+
+save_spatial_effect_sd(gam_anom_larvaeTF_FS3, anom, "pp",  delta=5, file = "gam_larvae_FS3_spatial_pp_5mmolCm2day.csv")
+save_spatial_effect_sd(gam_anom_larvaeTF_FS3, anom, "sst",   delta=0.5, file = "gam_larvae_FS3_spatial_sst_0.5degC.csv")
+save_spatial_effect_sd(gam_anom_larvaeTF_FS3, anom, "T_L1", delta=0.5, file = "gam_larvae_FS3_spatial_T_L1_0.5deg.csv")
+save_spatial_effect_sd(gam_anom_larvaeTF_FS3, anom, "O2_L2",  delta=10.0/44.661, file = "gam_larvae_FS3_spatial_O2_L2_10mmolm3.csv")
+
+```
+
+```{r}
+
+save_spatial_effect_sd(gam_anom_juvenileTF_FS3, anom, "pp",  file = "gam_juvenile_FS3_spatial_pp_sd.csv")
+save_spatial_effect_sd(gam_anom_juvenileTF_FS3, anom, "sst",   file = "gam_juvenile_FS3_spatial_sst_sd.csv")
+save_spatial_effect_sd(gam_anom_juvenileTF_FS3, anom, "T_L1", file = "gam_juvenile_FS3_spatial_T_L1_sd.csv")
+save_spatial_effect_sd(gam_anom_juvenileTF_FS3, anom, "O2_L2",  file = "gam_juvenile_FS3_spatial_O2_L2_sd.csv")
+
+save_spatial_effect_sd(gam_anom_juvenileTF_FS3, anom, "pp",  delta=5, file = "gam_juvenile_FS3_spatial_pp_5mmolCm2day.csv")
+save_spatial_effect_sd(gam_anom_juvenileTF_FS3, anom, "sst",   delta=0.5, file = "gam_juvenile_FS3_spatial_sst_0.5degC.csv")
+save_spatial_effect_sd(gam_anom_juvenileTF_FS3, anom, "T_L1", delta=0.5, file = "gam_juvenile_FS3_spatial_T_L1_0.5deg.csv")
+save_spatial_effect_sd(gam_anom_juvenileTF_FS3, anom, "O2_L2",  delta=10.0/44.661, file = "gam_juvenile_FS3_spatial_O2_L2_10mmolm3.csv")
+
+```
+
+Save the spatial effects
+
+```{r}
+
+save_spatial_effect_sd <- function(mod, data, var,
+                                   lon_n   = 110,
+                                   lat_n   = 40,
+                                   seasons = 1:4,
+                                   delta   = NULL,
+                                   file) {
+
+  # use actual model grid, not seq(min,max,…)
+  lon_seq <- sort(unique(data$lon))
+  lat_seq <- sort(unique(data$lat))
+
+  grid <- expand.grid(
+    lon        = lon_seq,
+    lat        = lat_seq,
+    season_num = seasons
+  )
+
+  base <- transform(
+    grid,
+    T_L1  = 0.0,
+    sst   = 0.0,
+    O2_L2 = 0.0,
+    T_L2  = 0.0
+  )
+
+  if (is.null(delta)) {
+    # local SD over time per (lon,lat)
+    sd_loc <- stats::aggregate(
+      data[[var]],
+      by = list(lon = data$lon, lat = data$lat),
+      FUN = function(z) {
+        z <- z[is.finite(z)]
+        if (length(z) < 2L) {
+          NA_real_                  # land / too few data -> NA
+        } else {
+          stats::sd(z)
+        }
+      }
+    )
+    names(sd_loc)[3] <- "sd_var"
+
+    base <- merge(base, sd_loc, by = c("lon", "lat"), all.x = TRUE)
+  } else {
+    if (!is.finite(delta) || delta == 0) {
+      stop("Non-finite or zero user-specified delta for ", var)
+    }
+    base$sd_var <- rep(delta, nrow(base))
+  }
+
+  base_pred <- predict(mod, newdata = base, type = "response")
+
+  mults <- c(-2, -1, 1, 2)
+  out_list <- vector("list", length(mults))
+
+  for (i in seq_along(mults)) {
+    m <- mults[i]
+    delta_val <- m * base$sd_var       # NA on land, scalar elsewhere
+
+    pert <- base
+    pert[[var]] <- pert[[var]] + delta_val
+
+    pred_pert <- predict(mod, newdata = pert, type = "response")
+
+    out_list[[i]] <- data.frame(
+      lon         = base$lon,
+      lat         = base$lat,
+      season_num  = base$season_num,
+      delta_mult  = m,
+      delta_value = delta_val,
+      delta_eff   = pred_pert - base_pred
+    )
+  }
+
+  out <- do.call(rbind, out_list)
+  write.csv(out, file, row.names = FALSE)
+  invisible(out)
+}
+
+```
+
+```{r}
+
+save_spatial_effect_sd(gam_anom_adultTF_FS3, anom, "T_L1",  file = "gam_adult_FS3_spatial_T_L1_sd.csv")
+save_spatial_effect_sd(gam_anom_adultTF_FS3, anom, "sst",   file = "gam_adult_FS3_spatial_sst_sd.csv")
+save_spatial_effect_sd(gam_anom_adultTF_FS3, anom, "O2_L2", file = "gam_adult_FS3_spatial_O2_L2_sd.csv")
+save_spatial_effect_sd(gam_anom_adultTF_FS3, anom, "T_L2",  file = "gam_adult_FS3_spatial_T_L2_sd.csv")
+
+
+save_spatial_effect_sd(gam_anom_adultTF_FS3, anom, "T_L1",  delta=0.5, file = "gam_adult_FS3_spatial_T_L1_0.5degC.csv")
+save_spatial_effect_sd(gam_anom_adultTF_FS3, anom, "sst",   delta=0.5, file = "gam_adult_FS3_spatial_sst_0.5degC.csv")
+save_spatial_effect_sd(gam_anom_adultTF_FS3, anom, "O2_L2", delta=10.0/44.661, file = "gam_adult_FS3_spatial_O2_L2_10mmolm3.csv")
+save_spatial_effect_sd(gam_anom_adultTF_FS3, anom, "T_L2",  delta=0.5, file = "gam_adult_FS3_spatial_T_L2_0.5degC.csv")
+
+```
+
+
+Save the predicted larvae biomass to csv
+
+```{r}
+
+## 1a) Overall prediction
+anom$larvae_biomassTF_pred_FS3 <- predict(
+  gam_anom_larvaeTF_FS3,
+  newdata = anom,
+  type    = "response"
+)
+
+## 1b) Term-wise contributions (matrix)
+terms_mat <- predict(
+  gam_anom_larvaeTF_FS3,
+  newdata = anom,
+  type    = "terms"
+)
+
+## Check names once, so you know what you’re adding:
+colnames(terms_mat)
+
+anom_export <- cbind(anom, as.data.frame(terms_mat))
+
+anom_export$eff_pp  <- anom_export[,"s(pp)"]  + anom_export[,"ti(pp,lon,lat)"]
+anom_export$eff_sst <- anom_export[,"s(sst)"] + anom_export[,"ti(sst,lon,lat)"]
+anom_export$eff_T_L1 <- anom_export[,"s(T_L1)"] + anom_export[,"ti(T_L1,lon,lat)"]
+anom_export$eff_O2_L2 <- anom_export[,"s(O2_L2)"]  + anom_export[,"ti(O2_L2,lon,lat)"]
+
+write.csv(
+  anom_export,
+  file      = "anomalous_larvae_GAM_FS3terms_WCPO.csv",
+  row.names = FALSE
+)
+
+```
+
+Save the predicted juvenile biomass to csv
+
+```{r}
+
+## 1a) Overall prediction
+anom$juvenile_biomassTF_pred_FS3 <- predict(
+  gam_anom_juvenileTF_FS3,
+  newdata = anom,
+  type    = "response"
+)
+
+## 1b) Term-wise contributions (matrix)
+terms_mat <- predict(
+  gam_anom_juvenileTF_FS3,
+  newdata = anom,
+  type    = "terms"
+)
+
+## Check names once, so you know what you’re adding:
+colnames(terms_mat)
+
+anom_export <- cbind(anom, as.data.frame(terms_mat))
+
+anom_export$eff_pp  <- anom_export[,"s(pp)"]  + anom_export[,"ti(pp,lon,lat)"]
+anom_export$eff_sst <- anom_export[,"s(sst)"] + anom_export[,"ti(sst,lon,lat)"]
+anom_export$eff_T_L1 <- anom_export[,"s(T_L1)"] + anom_export[,"ti(T_L1,lon,lat)"]
+anom_export$eff_O2_L2 <- anom_export[,"s(O2_L2)"]  + anom_export[,"ti(O2_L2,lon,lat)"]
+
+write.csv(
+  anom_export,
+  file      = "anomalous_juvenile_GAM_FS3terms_WCPO.csv",
+  row.names = FALSE
+)
+
+```
+
+Save the predicted adult biomass to csv
+
+```{r}
+
+## 1a) Overall prediction
+anom$adult_biomassTF_pred_FS3 <- predict(
+  gam_anom_adultTF_FS3,
+  newdata = anom,
+  type    = "response"
+)
+
+## 1b) Term-wise contributions (matrix)
+terms_mat <- predict(
+  gam_anom_adultTF_FS3,
+  newdata = anom,
+  type    = "terms"
+)
+
+## Check names once, so you know what you’re adding:
+colnames(terms_mat)
+
+anom_export <- cbind(anom, as.data.frame(terms_mat))
+
+anom_export$eff_sst  <- anom_export[,"s(sst)"]  + anom_export[,"ti(sst,lon,lat)"]
+anom_export$eff_T_L1 <- anom_export[,"s(T_L1)"] + anom_export[,"ti(T_L1,lon,lat)"]
+anom_export$eff_O2_L2 <- anom_export[,"s(O2_L2)"] + anom_export[,"ti(O2_L2,lon,lat)"]
+anom_export$eff_T_L2 <- anom_export[,"s(T_L2)"]  + anom_export[,"ti(T_L2,lon,lat)"]
+
+write.csv(
+  anom_export,
+  file      = "anomalous_adult_GAM_FS3terms_WCPO.csv",
+  row.names = FALSE
+)
+
+```
+

@@ -112,19 +112,15 @@ anom$season_num <- ifelse(anom$season == "DJF", 1,
 
 ```{r}
 
-gam_anom_adultTF_FS5 <- bam(
-  adult_biomass_TF ~
+gam_anom_larvaeTF <- bam(
+  larvae_biomass_TF ~
+    s(pp, k = k1, bs = "ts") +
     s(sst, k = k1, bs = "ts") +
     s(T_L1, k = k1, bs = "ts") +
-    s(U_L3, k = k1, bs = "ts") +
-    s(O2_L2, k = k1, bs = "ts") +
-    s(zeu, k = k1, bs = "ts") +
     s(T_L2, k = k1, bs = "ts") +
+    ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(U_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
   data = anom,
   method = "fREML",
@@ -132,7 +128,44 @@ gam_anom_adultTF_FS5 <- bam(
   cluster = cl,
   gc.level = 2
 )
-summary(gam_anom_adultTF_FS5)
+summary(gam_anom_larvaeTF)
+
+gam_anom_juvenileTF <- bam(
+  juvenile_biomass_TF ~
+    s(pp, k = k1, bs = "ts") +
+    s(sst, k = k1, bs = "ts") +
+    s(T_L1, k = k1, bs = "ts") +
+    s(T_L2, k = k1, bs = "ts") +
+    ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_juvenileTF)
+
+
+gam_anom_adultTF <- bam(
+  adult_biomass_TF ~
+    s(T_L1, k = k1, bs = "ts") +
+    s(sst, k = k1, bs = "ts") +
+    s(O2_L2, k = k1, bs = "ts") +
+    s(T_L2, k = k1, bs = "ts") +
+    ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
+    ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 2
+)
+summary(gam_anom_adultTF)
 
 
 ```
@@ -143,7 +176,10 @@ Create the anomalies required for the GAM in the my_imfs dataset
 
 ## vector of base variable names you have IMFs for:
 ## adjust this to what you actually have
-vars <- c("sst", "T_L1", "T_L2", "U_L3", "zeu", "O2_L2")  # <- add more here
+#vars_larvae <- c("pp", "sst", "T_L1", "O2_L2")  # <- add more here
+#vars_juvenile <- c("pp", "sst", "T_L1", "O2_L2")  # <- add more here
+#vars_adult <- c("T_L1", "sst", "O2_L2", "T_L2")  # <- add more here
+vars <- c("pp", "sst", "T_L1", "T_L2", "O2_L2")  # <- add more here
 
 # time index (same for all rows)
 t <- seq_len(nrow(my_imfs))
@@ -195,23 +231,20 @@ sub <- my_imfs[my_imfs$lon == lon0 & my_imfs$lat == lat0, ]
 
 plot(sub$T_L1_T, type='l')
 plot(sub$sst_T, type='l')
-plot(sub$U_L3_T, type='l')
 plot(sub$O2_L2_T, type='l')
-plot(sub$zeu_T, type='l')
+plot(sub$pp_T, type='l')
 plot(sub$T_L2_T, type='l')
 
 plot(sub$T_L1_T_detrended, type='l')
 plot(sub$sst_T_detrended, type='l')
-plot(sub$U_L3_T_detrended, type='l')
 plot(sub$O2_L2_T_detrended, type='l')
-plot(sub$zeu_T_detrended, type='l')
+plot(sub$pp_T_detrended, type='l')
 plot(sub$T_L2_T_detrended, type='l')
 
 plot(sub$T_L1_T_centered, type='l')
 plot(sub$sst_T_centered, type='l')
-plot(sub$U_L3_T_centered, type='l')
 plot(sub$O2_L2_T_centered, type='l')
-plot(sub$zeu_T_centered, type='l')
+plot(sub$pp_T_centered, type='l')
 plot(sub$T_L2_T_centered, type='l')
 
 
@@ -245,36 +278,32 @@ df_imfs <- my_imfs[, !(names(my_imfs) %in% cols_to_drop), drop = FALSE]
 
 cols_to_drop <- c("T_L1_MF","T_L1_LF","T_L1_T","T_L1_T_detrended","T_L1_T_centered",
                   "sst_MF","sst_LF","sst_T","sst_T_detrended","sst_T_centered",
-                  "U_L3_MF","U_L3_LF","U_L3_T","U_L3_T_detrended","U_L3_T_centered",
                   "O2_L2_MF","O2_L2_LF","O2_L2_T","O2_L2_T_detrended","O2_L2_T_centered",
-                  "zeu_MF","zeu_LF","zeu_T","zeu_T_detrended","zeu_T_centered",
+                  "pp_MF","pp_LF","pp_T","pp_T_detrended","pp_T_centered",
                   "T_L2_MF","T_L2_LF","T_L2_T","T_L2_T_detrended","T_L2_T_centered")
 df_HF_imfs <- df_imfs[, !(names(df_imfs) %in% cols_to_drop), drop = FALSE]
 names(df_HF_imfs) <- sub("_HF$", "", names(df_HF_imfs))
 
 cols_to_drop <- c("T_L1_HF","T_L1_LF","T_L1_T","T_L1_T_detrended","T_L1_T_centered",
                   "sst_HF","sst_LF","sst_T","sst_T_detrended","sst_T_centered",
-                  "U_L3_HF","U_L3_LF","U_L3_T","U_L3_T_detrended","U_L3_T_centered",
                   "O2_L2_HF","O2_L2_LF","O2_L2_T","O2_L2_T_detrended","O2_L2_T_centered",
-                  "zeu_HF","zeu_LF","zeu_T","zeu_T_detrended","zeu_T_centered",
+                  "pp_HF","pp_LF","pp_T","pp_T_detrended","pp_T_centered",
                   "T_L2_HF","T_L2_LF","T_L2_T","T_L2_T_detrended","T_L2_T_centered")
 df_MF_imfs <- df_imfs[, !(names(df_imfs) %in% cols_to_drop), drop = FALSE]
 names(df_MF_imfs) <- sub("_MF$", "", names(df_MF_imfs))
 
 cols_to_drop <- c("T_L1_HF","T_L1_MF","T_L1_T","T_L1_T_detrended","T_L1_T_centered",
                   "sst_HF","sst_MF","sst_T","sst_T_detrended","sst_T_centered",
-                  "U_L3_HF","U_L3_MF","U_L3_T","U_L3_T_detrended","U_L3_T_centered",
                   "O2_L2_HF","O2_L2_MF","O2_L2_T","O2_L2_T_detrended","O2_L2_T_centered",
-                  "zeu_HF","zeu_MF","zeu_T","zeu_T_detrended","zeu_T_centered",
+                  "pp_HF","pp_MF","pp_T","pp_T_detrended","pp_T_centered",
                   "T_L2_HF","T_L2_MF","T_L2_T","T_L2_T_detrended","T_L2_T_centered")
 df_LF_imfs <- df_imfs[, !(names(df_imfs) %in% cols_to_drop), drop = FALSE]
 names(df_LF_imfs) <- sub("_LF$", "", names(df_LF_imfs))
 
 cols_to_drop <- c("T_L1_HF","T_L1_MF","T_L1_T","T_L1_T_detrended","T_L1_LF",
                   "sst_HF","sst_MF","sst_T","sst_T_detrended","sst_LF",
-                  "U_L3_HF","U_L3_MF","U_L3_T","U_L3_T_detrended","U_L3_LF",
                   "O2_L2_HF","O2_L2_MF","O2_L2_T","O2_L2_T_detrended","O2_L2_LF",
-                  "zeu_HF","zeu_MF","zeu_T","zeu_T_detrended","zeu_LF",
+                  "pp_HF","pp_MF","pp_T","pp_T_detrended","pp_LF",
                   "T_L2_HF","T_L2_MF","T_L2_T","T_L2_T_detrended","T_L2_LF")
 df_T_imfs <- df_imfs[, !(names(df_imfs) %in% cols_to_drop), drop = FALSE]
 names(df_T_imfs) <- sub("_T_centered$", "", names(df_T_imfs))
@@ -293,9 +322,8 @@ sub <- df_T_imfs[df_T_imfs$lon == lon0 & df_T_imfs$lat == lat0, ]
 
 plot(sub$T_L1, type='l')
 plot(sub$sst, type='l')
-plot(sub$U_L3, type='l')
 plot(sub$O2_L2, type='l')
-plot(sub$zeu, type='l')
+plot(sub$pp, type='l')
 plot(sub$T_L2, type='l')
 
 ```
@@ -304,8 +332,110 @@ Do the predictions with the GAM using High-Freq, Mid-Freq, Low-Freq and long-ter
 
 ```{r}
 
+### Larvae ###
+
 p <- predict(
-  gam_anom_adultTF_FS5,
+  gam_anom_larvaeTF,
+  newdata  = df_HF_imfs,
+  type     = "response",
+  se.fit   = TRUE,
+  cluster  = cl,
+  block.size = 100000
+)
+larvaeTF_HF <- p$fit
+larvaeTF_HF_se <- p$se.fit
+
+
+p <- predict(
+  gam_anom_larvaeTF,
+  newdata  = df_MF_imfs,
+  type     = "response",
+  se.fit   = TRUE,
+  cluster  = cl,
+  block.size = 100000
+)
+larvaeTF_MF <- p$fit
+larvaeTF_MF_se <- p$se.fit
+
+
+p <- predict(
+  gam_anom_larvaeTF,
+  newdata  = df_LF_imfs,
+  type     = "response",
+  se.fit   = TRUE,
+  cluster  = cl,
+  block.size = 100000
+)
+larvaeTF_LF <- p$fit
+larvaeTF_LF_se <- p$se.fit
+
+
+p <- predict(
+  gam_anom_larvaeTF,
+  newdata  = df_T_imfs,
+  type     = "response",
+  se.fit   = TRUE,
+  cluster  = cl,
+  block.size = 100000
+)
+larvaeTF_T <- p$fit
+larvaeTF_T_se <- p$se.fit
+
+
+### Juveniles ###
+
+p <- predict(
+  gam_anom_juvenileTF,
+  newdata  = df_HF_imfs,
+  type     = "response",
+  se.fit   = TRUE,
+  cluster  = cl,
+  block.size = 100000
+)
+juvenileTF_HF <- p$fit
+juvenileTF_HF_se <- p$se.fit
+
+
+p <- predict(
+  gam_anom_juvenileTF,
+  newdata  = df_MF_imfs,
+  type     = "response",
+  se.fit   = TRUE,
+  cluster  = cl,
+  block.size = 100000
+)
+juvenileTF_MF <- p$fit
+juvenileTF_MF_se <- p$se.fit
+
+
+p <- predict(
+  gam_anom_juvenileTF,
+  newdata  = df_LF_imfs,
+  type     = "response",
+  se.fit   = TRUE,
+  cluster  = cl,
+  block.size = 100000
+)
+juvenileTF_LF <- p$fit
+juvenileTF_LF_se <- p$se.fit
+
+
+p <- predict(
+  gam_anom_juvenileTF,
+  newdata  = df_T_imfs,
+  type     = "response",
+  se.fit   = TRUE,
+  cluster  = cl,
+  block.size = 100000
+)
+juvenileTF_T <- p$fit
+juvenileTF_T_se <- p$se.fit
+
+
+### Adults ###
+
+p <- predict(
+  gam_anom_adultTF,
   newdata  = df_HF_imfs,
   type     = "response",
   se.fit   = TRUE,
@@ -317,7 +447,7 @@ adultTF_HF_se  <- p$se.fit
 
 
 p <- predict(
-  gam_anom_adultTF_FS5,
+  gam_anom_adultTF,
   newdata  = df_MF_imfs,
   type     = "response",
   se.fit   = TRUE,
@@ -329,7 +459,7 @@ adultTF_MF_se  <- p$se.fit
 
 
 p <- predict(
-  gam_anom_adultTF_FS5,
+  gam_anom_adultTF,
   newdata  = df_LF_imfs,
   type     = "response",
   se.fit   = TRUE,
@@ -341,7 +471,7 @@ adultTF_LF_se  <- p$se.fit
 
 
 p <- predict(
-  gam_anom_adultTF_FS5,
+  gam_anom_adultTF,
   newdata  = df_T_imfs,
   type     = "response",
   se.fit   = TRUE,
@@ -356,15 +486,31 @@ adultTF_T_se  <- p$se.fit
 
 ```{r}
 
+df_HF_imfs$larvaeTF_HF    <- larvaeTF_HF
+df_HF_imfs$larvaeTF_HF_se <- larvaeTF_HF_se
+df_HF_imfs$juvenileTF_HF    <- juvenileTF_HF
+df_HF_imfs$juvenileTF_HF_se <- juvenileTF_HF_se
 df_HF_imfs$adultTF_HF    <- adultTF_HF
 df_HF_imfs$adultTF_HF_se <- adultTF_HF_se
 
+df_MF_imfs$larvaeTF_MF    <- larvaeTF_MF
+df_MF_imfs$larvaeTF_MF_se <- larvaeTF_MF_se
+df_MF_imfs$juvenileTF_MF    <- juvenileTF_MF
+df_MF_imfs$juvenileTF_MF_se <- juvenileTF_MF_se
 df_MF_imfs$adultTF_MF    <- adultTF_MF
 df_MF_imfs$adultTF_MF_se <- adultTF_MF_se
 
+df_LF_imfs$larvaeTF_LF    <- larvaeTF_LF
+df_LF_imfs$larvaeTF_LF_se <- larvaeTF_LF_se
+df_LF_imfs$juvenileTF_LF    <- juvenileTF_LF
+df_LF_imfs$juvenileTF_LF_se <- juvenileTF_LF_se
 df_LF_imfs$adultTF_LF    <- adultTF_LF
 df_LF_imfs$adultTF_LF_se <- adultTF_LF_se
 
+df_T_imfs$larvaeTF_T    <- larvaeTF_T
+df_T_imfs$larvaeTF_T_se <- larvaeTF_T_se
+df_T_imfs$juvenileTF_T    <- juvenileTF_T
+df_T_imfs$juvenileTF_T_se <- juvenileTF_T_se
 df_T_imfs$adultTF_T    <- adultTF_T
 df_T_imfs$adultTF_T_se <- adultTF_T_se
 
@@ -395,27 +541,173 @@ decompose_predictors <- function(mod, newdata, cluster = NULL, block.size = 1000
   }
 
   # one column per oceanographic predictor
+  contrib_T_L1  <- sum_by_pattern("T_L1")
+  contrib_sst   <- sum_by_pattern("sst")
+  contrib_O2_L2 <- sum_by_pattern("O2_L2")
+  contrib_pp    <- sum_by_pattern("pp")
+
+  # intercept (same for all rows)
+  intercept <- attr(pt, "constant")
+  if (is.null(intercept) || length(intercept) == 0L) intercept <- 0
+
+  drop <- c(
+    "larvaeTF_T_L1",
+    "larvaeTF_sst",
+    "larvaeTF_O2_L2",
+    "larvaeTF_pp",
+    "larvaeTF_intercept"
+  )
+  newdata[drop] <- NULL
+
+  new_cols <- data.frame(
+    larvaeTF_T_L1      = contrib_T_L1,
+    larvaeTF_sst       = contrib_sst,
+    larvaeTF_O2_L2     = contrib_O2_L2,
+    larvaeTF_pp        = contrib_pp,
+    larvaeTF_intercept = rep(intercept, nrow(newdata)),
+    check.names = FALSE
+  )
+
+  out <- cbind(newdata, new_cols)
+  return(out)
+}
+
+# Add predictor-specific contributions
+df_HF_imfs <- decompose_predictors(gam_anom_larvaeTF, df_HF_imfs, cluster = cl)
+df_MF_imfs <- decompose_predictors(gam_anom_larvaeTF, df_MF_imfs, cluster = cl)
+df_LF_imfs <- decompose_predictors(gam_anom_larvaeTF, df_LF_imfs, cluster = cl)
+df_T_imfs  <- decompose_predictors(gam_anom_larvaeTF, df_T_imfs, cluster = cl)
+
+```
+
+
+```{r}
+
+write.csv(df_HF_imfs, "/g/data/es60/SEAPODYM/pearse_GAMs/anomalous_values_GAM_predictions_larvaeHF.csv", row.names = FALSE)
+write.csv(df_MF_imfs, "/g/data/es60/SEAPODYM/pearse_GAMs/anomalous_values_GAM_predictions_larvaeMF.csv", row.names = FALSE)
+write.csv(df_LF_imfs, "/g/data/es60/SEAPODYM/pearse_GAMs/anomalous_values_GAM_predictions_larvaeLF.csv", row.names = FALSE)
+write.csv(df_T_imfs, "/g/data/es60/SEAPODYM/pearse_GAMs/anomalous_values_GAM_predictions_larvaeT.csv", row.names = FALSE)
+
+```
+
+
+```{r}
+
+decompose_predictors <- function(mod, newdata, cluster = NULL, block.size = 100000) {
+
+  # term-level contributions on the linear predictor scale
+  pt <- mgcv::predict.gam(
+    mod,
+    newdata  = newdata,
+    type     = "terms",
+    se.fit   = FALSE,
+    cluster  = cluster,
+    block.size = block.size
+  )
+  term_names <- colnames(pt)
+
+  # helper: sum all terms that contain a given pattern in their name
+  sum_by_pattern <- function(pattern) {
+    idx <- grep(pattern, term_names)
+    if (length(idx) == 0L) return(rep(0, nrow(newdata)))
+    rowSums(pt[, idx, drop = FALSE])
+  }
+
+  # one column per oceanographic predictor
+  contrib_T_L1  <- sum_by_pattern("T_L1")
+  contrib_sst   <- sum_by_pattern("sst")
+  contrib_O2_L2 <- sum_by_pattern("O2_L2")
+  contrib_pp    <- sum_by_pattern("pp")
+
+  # intercept (same for all rows)
+  intercept <- attr(pt, "constant")
+  if (is.null(intercept) || length(intercept) == 0L) intercept <- 0
+
+  drop <- c(
+    "juvenileTF_T_L1",
+    "juvenileTF_sst",
+    "juvenileTF_O2_L2",
+    "juvenileTF_pp",
+    "juvenileTF_intercept"
+  )
+  newdata[drop] <- NULL
+
+  new_cols <- data.frame(
+    juvenileTF_T_L1      = contrib_T_L1,
+    juvenileTF_sst       = contrib_sst,
+    juvenileTF_O2_L2     = contrib_O2_L2,
+    juvenileTF_pp        = contrib_pp,
+    juvenileTF_intercept = rep(intercept, nrow(newdata)),
+    check.names = FALSE
+  )
+
+  out <- cbind(newdata, new_cols)
+  return(out)
+}
+
+# Add predictor-specific contributions
+df_HF_imfs <- decompose_predictors(gam_anom_juvenileTF, df_HF_imfs, cluster = cl)
+df_MF_imfs <- decompose_predictors(gam_anom_juvenileTF, df_MF_imfs, cluster = cl)
+df_LF_imfs <- decompose_predictors(gam_anom_juvenileTF, df_LF_imfs, cluster = cl)
+df_T_imfs  <- decompose_predictors(gam_anom_juvenileTF, df_T_imfs, cluster = cl)
+
+```
+
+```{r}
+
+# --- Save to disk ---
+write.csv(df_HF_imfs, "/g/data/es60/SEAPODYM/pearse_GAMs/anomalous_values_GAM_predictions_juvenileHF.csv", row.names = FALSE)
+write.csv(df_MF_imfs, "/g/data/es60/SEAPODYM/pearse_GAMs/anomalous_values_GAM_predictions_juvenileMF.csv", row.names = FALSE)
+write.csv(df_LF_imfs, "/g/data/es60/SEAPODYM/pearse_GAMs/anomalous_values_GAM_predictions_juvenileLF.csv", row.names = FALSE)
+write.csv(df_T_imfs, "/g/data/es60/SEAPODYM/pearse_GAMs/anomalous_values_GAM_predictions_juvenileT.csv", row.names = FALSE)
+
+```
+
+```{r}
+
+decompose_predictors <- function(mod, newdata, cluster = NULL, block.size = 100000) {
+
+  # term-level contributions on the linear predictor scale
+  pt <- mgcv::predict.gam(
+    mod,
+    newdata  = newdata,
+    type     = "terms",
+    se.fit   = FALSE,
+    cluster  = cluster,
+    block.size = block.size
+  )
+  term_names <- colnames(pt)
+
+  # helper: sum all terms that contain a given pattern in their name
+  sum_by_pattern <- function(pattern) {
+    idx <- grep(pattern, term_names)
+    if (length(idx) == 0L) return(rep(0, nrow(newdata)))
+    rowSums(pt[, idx, drop = FALSE])
+  }
+
+  # one column per oceanographic predictor
   contrib_T_L1 <- sum_by_pattern("T_L1")
   contrib_sst  <- sum_by_pattern("sst")
-  contrib_U_L3 <- sum_by_pattern("U_L3")
   contrib_O2_L2<- sum_by_pattern("O2_L2")
-  contrib_zeu  <- sum_by_pattern("zeu")
   contrib_T_L2 <- sum_by_pattern("T_L2")
 
   # intercept (same for all rows)
   intercept <- attr(pt, "constant")
   if (is.null(intercept) || length(intercept) == 0L) intercept <- 0
 
-  drop <- c("adultTF_T_L1","adultTF_sst","adultTF_U_L3","adultTF_O2_L2",
-          "adultTF_zeu","adultTF_T_L2","adultTF_intercept")
+  drop <- c(
+    "adultTF_T_L1",
+    "adultTF_sst",
+    "adultTF_O2_L2",
+    "adultTF_T_L2",
+    "adultTF_intercept"
+    )
   newdata[drop] <- NULL
 
   new_cols <- data.frame(
     adultTF_T_L1  = contrib_T_L1,
     adultTF_sst   = contrib_sst,
-    adultTF_U_L3  = contrib_U_L3,
     adultTF_O2_L2 = contrib_O2_L2,
-    adultTF_zeu   = contrib_zeu,
     adultTF_T_L2  = contrib_T_L2,
     adultTF_intercept = rep(intercept, nrow(newdata)),
     check.names = FALSE
@@ -426,20 +718,20 @@ decompose_predictors <- function(mod, newdata, cluster = NULL, block.size = 1000
 }
 
 # Add predictor-specific contributions
-df_HF_imfs <- decompose_predictors(gam_anom_adultTF_FS5, df_HF_imfs, cluster = cl)
-df_MF_imfs <- decompose_predictors(gam_anom_adultTF_FS5, df_MF_imfs, cluster = cl)
-df_LF_imfs <- decompose_predictors(gam_anom_adultTF_FS5, df_LF_imfs, cluster = cl)
-df_T_imfs  <- decompose_predictors(gam_anom_adultTF_FS5, df_T_imfs,  cluster = cl)
+df_HF_imfs <- decompose_predictors(gam_anom_adultTF, df_HF_imfs, cluster = cl)
+df_MF_imfs <- decompose_predictors(gam_anom_adultTF, df_MF_imfs, cluster = cl)
+df_LF_imfs <- decompose_predictors(gam_anom_adultTF, df_LF_imfs, cluster = cl)
+df_T_imfs  <- decompose_predictors(gam_anom_adultTF, df_T_imfs,  cluster = cl)
 
 ```
 
 ```{r}
 
 # --- Save to disk ---
-write.csv(df_HF_imfs, "/g/data/es60/SEAPODYM/pearse_GAMs/anomalous_values_GAM_predictions_HF.csv", row.names = FALSE)
-write.csv(df_MF_imfs, "/g/data/es60/SEAPODYM/pearse_GAMs/anomalous_values_GAM_predictions_MF.csv", row.names = FALSE)
-write.csv(df_LF_imfs, "/g/data/es60/SEAPODYM/pearse_GAMs/anomalous_values_GAM_predictions_LF.csv", row.names = FALSE)
-write.csv(df_T_imfs, "/g/data/es60/SEAPODYM/pearse_GAMs/anomalous_values_GAM_predictions_T.csv", row.names = FALSE)
+write.csv(df_HF_imfs, "/g/data/es60/SEAPODYM/pearse_GAMs/anomalous_values_GAM_predictions_adultHF.csv", row.names = FALSE)
+write.csv(df_MF_imfs, "/g/data/es60/SEAPODYM/pearse_GAMs/anomalous_values_GAM_predictions_adultMF.csv", row.names = FALSE)
+write.csv(df_LF_imfs, "/g/data/es60/SEAPODYM/pearse_GAMs/anomalous_values_GAM_predictions_adultLF.csv", row.names = FALSE)
+write.csv(df_T_imfs, "/g/data/es60/SEAPODYM/pearse_GAMs/anomalous_values_GAM_predictions_adultT.csv", row.names = FALSE)
 
 ```
 

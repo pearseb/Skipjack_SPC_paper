@@ -77,8 +77,8 @@ Load GAMs
 
 ```{r}
 
-gam_abso_larvaeTF_all <- readRDS("gams/gam_abso_larvaeTF_all.rds")
-gam_anom_larvaeTF_all <- readRDS("gams/gam_anom_larvaeTF_all.rds")
+gam_abso_larvaeTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_larvaeTF.rds")
+gam_anom_larvaeTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_larvaeTF.rds")
 
 ```
 
@@ -86,12 +86,13 @@ Juveniles Load GAMs
 
 ```{r}
 
-gam_abso_juvenileTF_all <- readRDS("gams/gam_abso_juvenileTF_all.rds")
-gam_abso_juvenileTF_allL <- readRDS("gams/gam_abso_juvenileTF_allL.rds")
-gam_anom_juvenileTF_all <- readRDS("gams/gam_anom_juvenileTF_all.rds")
-gam_anom_juvenileTF_allL <- readRDS("gams/gam_anom_juvenileTF_allL.rds")
-gam_abso_juvenileTF_allpL <- readRDS("gams/gam_abso_juvenileTF_allpL.rds")
-gam_anom_juvenileTF_allpL <- readRDS("gams/gam_anom_juvenileTF_allpL.rds")
+gam_abso_juvenileTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_juvenileTF.rds")
+gam_abso_juvenileTF_allL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_juvenileTF_L.rds")
+gam_abso_juvenileTF_allpL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_juvenileTF_pL.rds")
+
+gam_anom_juvenileTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_juvenileTF.rds")
+gam_anom_juvenileTF_allL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_juvenileTF_L.rds")
+gam_anom_juvenileTF_allpL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_juvenileTF_pL.rds")
 
 ```
 
@@ -108,12 +109,13 @@ Adults
 
 ```{r}
 
-gam_abso_adultTF_all <- readRDS("gams/gam_abso_adultTF_all.rds")
-gam_abso_adultTF_allJ <- readRDS("gams/gam_abso_adultTF_allJ.rds")
-gam_anom_adultTF_all <- readRDS("gams/gam_anom_adultTF_all.rds")
-gam_anom_adultTF_allJ <- readRDS("gams/gam_anom_adultTF_allJ.rds")
-gam_abso_adultTF_allpL <- readRDS("gams/gam_abso_adultTF_allpJ.rds")
-gam_anom_adultTF_allpL <- readRDS("gams/gam_anom_adultTF_allpJ.rds")
+gam_abso_adultTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_adultTF.rds")
+gam_abso_adultTF_allJ <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_adultTF_J.rds")
+gam_abso_adultTF_allpL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_adultTF_pJ.rds")
+
+gam_anom_adultTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_adultTF.rds")
+gam_anom_adultTF_allJ <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_adultTF_J.rds")
+gam_anom_adultTF_allpL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_adultTF_pJ.rds")
 
 ```
 
@@ -166,10 +168,6 @@ gam80_abso_larvaeTF_all <- bam(
   larvae_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -185,10 +183,6 @@ gam80_abso_larvaeTF_all <- bam(
     s(O2_L3, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -214,10 +208,6 @@ gam80_anom_larvaeTF_all <- bam(
   larvae_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -233,10 +223,6 @@ gam80_anom_larvaeTF_all <- bam(
     s(O2_L3, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -258,10 +244,25 @@ gam80_anom_larvaeTF_all <- bam(
 )
 summary(gam80_anom_larvaeTF_all)
 
-abso_clim_train <- tapply(  abso_train$larvae_biomass_TF,  abso_train$season,  mean,  na.rm = TRUE )
-abso_clim_test <- abso_clim_train[ abso_test$season ]
-anom_clim_train <- tapply(  anom_train$larvae_biomass_TF,  anom_train$season,  mean,  na.rm = TRUE )
-anom_clim_test <- anom_clim_train[ anom_test$season ]
+# One global mean number
+#abso_clim_train <- tapply(  abso_train$larvae_biomass_TF,  abso_train$season,  mean,  na.rm = TRUE )
+#anom_clim_train <- tapply(  anom_train$larvae_biomass_TF,  anom_train$season,  mean,  na.rm = TRUE )
+#abso_clim_test <- abso_clim_train[ abso_test$season ]
+#anom_clim_test <- anom_clim_train[ anom_test$season ]
+
+# biomass climatologies at each lon, lat, season
+abso_clim_train <- aggregate(larvae_biomass_TF ~ lon + lat + season, data = abso_train, FUN = mean, na.rm = TRUE)
+anom_clim_train <- aggregate(larvae_biomass_TF ~ lon + lat + season, data = anom_train, FUN = mean, na.rm = TRUE)
+names(abso_clim_train)[4] <- "clim"
+names(anom_clim_train)[4] <- "clim"
+# Create matching keys
+key_abso_train <- paste(abso_clim_train$lon, abso_clim_train$lat, abso_clim_train$season)
+key_abso_test <- paste(abso_test$lon, abso_test$lat, abso_test$season)
+key_anom_train <- paste(anom_clim_train$lon, anom_clim_train$lat, anom_clim_train$season)
+key_anom_test <- paste(anom_test$lon, anom_test$lat, anom_test$season)
+# Assign the appropriate training climatology to every test observation
+abso_clim_test <- abso_clim_train$clim[ match(key_abso_test, key_abso_train) ]
+anom_clim_test <- anom_clim_train$clim[ match(key_anom_test, key_anom_train) ]
 
 pred_abso_all <- predict(gam80_abso_larvaeTF_all, newdata = abso_test)
 pred_anom_all <- predict(gam80_anom_larvaeTF_all, newdata = anom_test)
@@ -287,6 +288,9 @@ print(R2_anom_larvae_all)
 
 ```
 
+R2 (absolute) = 78.9%
+R2 (anomaly)  = 74.2%
+
 Juveniles (no larvae)
 
 ```{r}
@@ -297,10 +301,6 @@ gam80_abso_juvenileTF_all <- bam(
   juvenile_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -316,10 +316,6 @@ gam80_abso_juvenileTF_all <- bam(
     s(O2_L3, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -345,10 +341,6 @@ gam80_anom_juvenileTF_all <- bam(
   juvenile_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -364,10 +356,6 @@ gam80_anom_juvenileTF_all <- bam(
     s(O2_L3, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -390,10 +378,24 @@ gam80_anom_juvenileTF_all <- bam(
 summary(gam80_anom_juvenileTF_all)
 
 
-abso_clim_train <- tapply(  abso_train$juvenile_biomass_TF,  abso_train$season,  mean,  na.rm = TRUE )
-abso_clim_test <- abso_clim_train[ abso_test$season ]
-anom_clim_train <- tapply(  anom_train$juvenile_biomass_TF,  anom_train$season,  mean,  na.rm = TRUE )
-anom_clim_test <- anom_clim_train[ anom_test$season ]
+#abso_clim_train <- tapply(  abso_train$juvenile_biomass_TF,  abso_train$season,  mean,  na.rm = TRUE )
+#abso_clim_test <- abso_clim_train[ abso_test$season ]
+#anom_clim_train <- tapply(  anom_train$juvenile_biomass_TF,  anom_train$season,  mean,  na.rm = TRUE )
+#anom_clim_test <- anom_clim_train[ anom_test$season ]
+
+# biomass climatologies at each lon, lat, season
+abso_clim_train <- aggregate(juvenile_biomass_TF ~ lon + lat + season, data = abso_train, FUN = mean, na.rm = TRUE)
+anom_clim_train <- aggregate(juvenile_biomass_TF ~ lon + lat + season, data = anom_train, FUN = mean, na.rm = TRUE)
+names(abso_clim_train)[4] <- "clim"
+names(anom_clim_train)[4] <- "clim"
+# Create matching keys
+key_abso_train <- paste(abso_clim_train$lon, abso_clim_train$lat, abso_clim_train$season)
+key_abso_test <- paste(abso_test$lon, abso_test$lat, abso_test$season)
+key_anom_train <- paste(anom_clim_train$lon, anom_clim_train$lat, anom_clim_train$season)
+key_anom_test <- paste(anom_test$lon, anom_test$lat, anom_test$season)
+# Assign the appropriate training climatology to every test observation
+abso_clim_test <- abso_clim_train$clim[ match(key_abso_test, key_abso_train) ]
+anom_clim_test <- anom_clim_train$clim[ match(key_anom_test, key_anom_train) ]
 
 pred_abso_all <- predict(gam80_abso_juvenileTF_all, newdata = abso_test)
 pred_anom_all <- predict(gam80_anom_juvenileTF_all, newdata = anom_test)
@@ -419,6 +421,9 @@ print(R2_anom_juvenile_all)
 
 ```
 
+R2 (absolute) = 0.42 
+R2 (anomaly)  = 0.52
+
 Juveniles with perfectly known larvae
 
 ```{r}
@@ -429,10 +434,6 @@ gam80_abso_juvenileTF_allL <- bam(
   juvenile_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -449,10 +450,6 @@ gam80_abso_juvenileTF_allL <- bam(
     s(larvae_biomass_TF, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -479,10 +476,6 @@ gam80_anom_juvenileTF_allL <- bam(
   juvenile_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -499,10 +492,6 @@ gam80_anom_juvenileTF_allL <- bam(
     s(larvae_biomass_TF, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -525,10 +514,24 @@ gam80_anom_juvenileTF_allL <- bam(
 )
 summary(gam80_anom_juvenileTF_allL)
 
-abso_clim_train <- tapply(  abso_train$juvenile_biomass_TF,  abso_train$season,  mean,  na.rm = TRUE )
-abso_clim_test <- abso_clim_train[ abso_test$season ]
-anom_clim_train <- tapply(  anom_train$juvenile_biomass_TF,  anom_train$season,  mean,  na.rm = TRUE )
-anom_clim_test <- anom_clim_train[ anom_test$season ]
+#abso_clim_train <- tapply(  abso_train$juvenile_biomass_TF,  abso_train$season,  mean,  na.rm = TRUE )
+#abso_clim_test <- abso_clim_train[ abso_test$season ]
+#anom_clim_train <- tapply(  anom_train$juvenile_biomass_TF,  anom_train$season,  mean,  na.rm = TRUE )
+#anom_clim_test <- anom_clim_train[ anom_test$season ]
+
+# biomass climatologies at each lon, lat, season
+abso_clim_train <- aggregate(juvenile_biomass_TF ~ lon + lat + season, data = abso_train, FUN = mean, na.rm = TRUE)
+anom_clim_train <- aggregate(juvenile_biomass_TF ~ lon + lat + season, data = anom_train, FUN = mean, na.rm = TRUE)
+names(abso_clim_train)[4] <- "clim"
+names(anom_clim_train)[4] <- "clim"
+# Create matching keys
+key_abso_train <- paste(abso_clim_train$lon, abso_clim_train$lat, abso_clim_train$season)
+key_abso_test <- paste(abso_test$lon, abso_test$lat, abso_test$season)
+key_anom_train <- paste(anom_clim_train$lon, anom_clim_train$lat, anom_clim_train$season)
+key_anom_test <- paste(anom_test$lon, anom_test$lat, anom_test$season)
+# Assign the appropriate training climatology to every test observation
+abso_clim_test <- abso_clim_train$clim[ match(key_abso_test, key_abso_train) ]
+anom_clim_test <- anom_clim_train$clim[ match(key_anom_test, key_anom_train) ]
 
 pred_abso_allL <- predict(gam80_abso_juvenileTF_allL, newdata = abso_test)
 pred_anom_allL <- predict(gam80_anom_juvenileTF_allL, newdata = anom_test)
@@ -554,6 +557,9 @@ print(R2_anom_juvenile_allL)
 
 ```
 
+R2 (absolute) = 0.698 
+R2 (anomaly)  = 0.687
+
 Juveniles with predicted larvae
 
 ```{r}
@@ -564,10 +570,6 @@ gam80_abso_juvenileTF_allpL <- bam(
   juvenile_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -584,10 +586,6 @@ gam80_abso_juvenileTF_allpL <- bam(
     s(larvae_biomass_TFpred_all, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -614,10 +612,6 @@ gam80_anom_juvenileTF_allpL <- bam(
   juvenile_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -634,10 +628,6 @@ gam80_anom_juvenileTF_allpL <- bam(
     s(larvae_biomass_TFpred_all, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -660,10 +650,24 @@ gam80_anom_juvenileTF_allpL <- bam(
 )
 summary(gam80_anom_juvenileTF_allpL)
 
-abso_clim_train <- tapply(  abso_train$juvenile_biomass_TF,  abso_train$season,  mean,  na.rm = TRUE )
-abso_clim_test <- abso_clim_train[ abso_test$season ]
-anom_clim_train <- tapply(  anom_train$juvenile_biomass_TF,  anom_train$season,  mean,  na.rm = TRUE )
-anom_clim_test <- anom_clim_train[ anom_test$season ]
+#abso_clim_train <- tapply(  abso_train$juvenile_biomass_TF,  abso_train$season,  mean,  na.rm = TRUE )
+#abso_clim_test <- abso_clim_train[ abso_test$season ]
+#anom_clim_train <- tapply(  anom_train$juvenile_biomass_TF,  anom_train$season,  mean,  na.rm = TRUE )
+#anom_clim_test <- anom_clim_train[ anom_test$season ]
+
+# biomass climatologies at each lon, lat, season
+abso_clim_train <- aggregate(juvenile_biomass_TF ~ lon + lat + season, data = abso_train, FUN = mean, na.rm = TRUE)
+anom_clim_train <- aggregate(juvenile_biomass_TF ~ lon + lat + season, data = anom_train, FUN = mean, na.rm = TRUE)
+names(abso_clim_train)[4] <- "clim"
+names(anom_clim_train)[4] <- "clim"
+# Create matching keys
+key_abso_train <- paste(abso_clim_train$lon, abso_clim_train$lat, abso_clim_train$season)
+key_abso_test <- paste(abso_test$lon, abso_test$lat, abso_test$season)
+key_anom_train <- paste(anom_clim_train$lon, anom_clim_train$lat, anom_clim_train$season)
+key_anom_test <- paste(anom_test$lon, anom_test$lat, anom_test$season)
+# Assign the appropriate training climatology to every test observation
+abso_clim_test <- abso_clim_train$clim[ match(key_abso_test, key_abso_train) ]
+anom_clim_test <- anom_clim_train$clim[ match(key_anom_test, key_anom_train) ]
 
 pred_abso_allpL <- predict(gam80_abso_juvenileTF_allpL, newdata = abso_test)
 pred_anom_allpL <- predict(gam80_anom_juvenileTF_allpL, newdata = anom_test)
@@ -689,11 +693,14 @@ print(R2_anom_juvenile_allpL)
 
 ```
 
+R2 (absolute) = 0.434
+R2 (anomaly)  = 0.530
+
 Juveniles just from larvae
 
 ```{r}
 
-gam80_abso_juvenileTF_J <- bam(
+gam80_abso_juvenileTF_L <- bam(
   juvenile_biomass_TF ~ 
     s(larvae_biomass_TF, k=k1, bs="ts") +
     ti(larvae_biomass_TF, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
@@ -703,9 +710,9 @@ gam80_abso_juvenileTF_J <- bam(
   cluster = cl,
   gc.level = 1
 )
-summary(gam80_abso_juvenileTF_J)
+summary(gam80_abso_juvenileTF_L)
 
-gam80_abso_juvenileTF_pJ <- bam(
+gam80_abso_juvenileTF_pL <- bam(
   juvenile_biomass_TF ~ 
     s(larvae_biomass_TFpred_all, k=k1, bs="ts") +
     ti(larvae_biomass_TFpred_all, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
@@ -715,9 +722,9 @@ gam80_abso_juvenileTF_pJ <- bam(
   cluster = cl,
   gc.level = 1
 )
-summary(gam80_abso_juvenileTF_pJ)
+summary(gam80_abso_juvenileTF_pL)
 
-gam80_anom_juvenileTF_J <- bam(
+gam80_anom_juvenileTF_L <- bam(
   juvenile_biomass_TF ~ 
     s(larvae_biomass_TF, k=k1, bs="ts") +
     ti(larvae_biomass_TF, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
@@ -727,9 +734,9 @@ gam80_anom_juvenileTF_J <- bam(
   cluster = cl,
   gc.level = 1
 )
-summary(gam80_anom_juvenileTF_J)
+summary(gam80_anom_juvenileTF_L)
 
-gam80_anom_juvenileTF_pJ <- bam(
+gam80_anom_juvenileTF_pL <- bam(
   juvenile_biomass_TF ~ 
     s(larvae_biomass_TFpred_all, k=k1, bs="ts") +
     ti(larvae_biomass_TFpred_all, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
@@ -739,57 +746,76 @@ gam80_anom_juvenileTF_pJ <- bam(
   cluster = cl,
   gc.level = 1
 )
-summary(gam80_anom_juvenileTF_pJ)
+summary(gam80_anom_juvenileTF_pL)
 
-abso_clim_train <- tapply(  abso_train$juvenile_biomass_TF,  abso_train$season,  mean,  na.rm = TRUE )
-abso_clim_test <- abso_clim_train[ abso_test$season ]
-anom_clim_train <- tapply(  anom_train$juvenile_biomass_TF,  anom_train$season,  mean,  na.rm = TRUE )
-anom_clim_test <- anom_clim_train[ anom_test$season ]
+#abso_clim_train <- tapply(  abso_train$juvenile_biomass_TF,  abso_train$season,  mean,  na.rm = TRUE )
+#abso_clim_test <- abso_clim_train[ abso_test$season ]
+#anom_clim_train <- tapply(  anom_train$juvenile_biomass_TF,  anom_train$season,  mean,  na.rm = TRUE )
+#anom_clim_test <- anom_clim_train[ anom_test$season ]
 
-pred_abso_J <- predict(gam80_abso_juvenileTF_J, newdata = abso_test)
-pred_abso_pJ <- predict(gam80_abso_juvenileTF_pJ, newdata = abso_test)
-pred_anom_J <- predict(gam80_anom_juvenileTF_J, newdata = anom_test)
-pred_anom_pJ <- predict(gam80_anom_juvenileTF_pJ, newdata = anom_test)
+# biomass climatologies at each lon, lat, season
+abso_clim_train <- aggregate(juvenile_biomass_TF ~ lon + lat + season, data = abso_train, FUN = mean, na.rm = TRUE)
+anom_clim_train <- aggregate(juvenile_biomass_TF ~ lon + lat + season, data = anom_train, FUN = mean, na.rm = TRUE)
+names(abso_clim_train)[4] <- "clim"
+names(anom_clim_train)[4] <- "clim"
+# Create matching keys
+key_abso_train <- paste(abso_clim_train$lon, abso_clim_train$lat, abso_clim_train$season)
+key_abso_test <- paste(abso_test$lon, abso_test$lat, abso_test$season)
+key_anom_train <- paste(anom_clim_train$lon, anom_clim_train$lat, anom_clim_train$season)
+key_anom_test <- paste(anom_test$lon, anom_test$lat, anom_test$season)
+# Assign the appropriate training climatology to every test observation
+abso_clim_test <- abso_clim_train$clim[ match(key_abso_test, key_abso_train) ]
+anom_clim_test <- anom_clim_train$clim[ match(key_anom_test, key_anom_train) ]
 
-idx <- complete.cases(abso_test$juvenile_biomass_TF, pred_abso_J, abso_test$season, abso_clim_test)
+pred_abso_L <- predict(gam80_abso_juvenileTF_L, newdata = abso_test)
+pred_abso_pL <- predict(gam80_abso_juvenileTF_pL, newdata = abso_test)
+pred_anom_L <- predict(gam80_anom_juvenileTF_L, newdata = anom_test)
+pred_anom_pL <- predict(gam80_anom_juvenileTF_pL, newdata = anom_test)
+
+idx <- complete.cases(abso_test$juvenile_biomass_TF, pred_abso_L, abso_test$season, abso_clim_test)
 y_test   <- abso_test$juvenile_biomass_TF[idx]
-y_pred   <- pred_abso_J[idx]
+y_pred   <- pred_abso_L[idx]
 clim_use <- abso_clim_test[idx]
 SS_res <- sum((y_test - y_pred)^2)
 SS_tot <- sum((y_test - clim_use)^2)
-R2_abso_juvenile_J <- 1 - SS_res / SS_tot
+R2_abso_juvenile_L <- 1 - SS_res / SS_tot
 
-idx <- complete.cases(abso_test$juvenile_biomass_TF, pred_abso_pJ, abso_test$season, abso_clim_test)
+idx <- complete.cases(abso_test$juvenile_biomass_TF, pred_abso_pL, abso_test$season, abso_clim_test)
 y_test   <- abso_test$juvenile_biomass_TF[idx]
-y_pred   <- pred_abso_pJ[idx]
+y_pred   <- pred_abso_pL[idx]
 clim_use <- abso_clim_test[idx]
 SS_res <- sum((y_test - y_pred)^2)
 SS_tot <- sum((y_test - clim_use)^2)
-R2_abso_juvenile_pJ <- 1 - SS_res / SS_tot
+R2_abso_juvenile_pL <- 1 - SS_res / SS_tot
 
-idx <- complete.cases(anom_test$juvenile_biomass_TF, pred_anom_J, anom_test$season, anom_clim_test)
+idx <- complete.cases(anom_test$juvenile_biomass_TF, pred_anom_L, anom_test$season, anom_clim_test)
 y_test   <- anom_test$juvenile_biomass_TF[idx]
-y_pred   <- pred_anom_J[idx]
+y_pred   <- pred_anom_L[idx]
 clim_use <- anom_clim_test[idx]
 SS_res <- sum((y_test - y_pred)^2)
 SS_tot <- sum((y_test - clim_use)^2)
-R2_anom_juvenile_J <- 1 - SS_res / SS_tot
+R2_anom_juvenile_L <- 1 - SS_res / SS_tot
 
-idx <- complete.cases(anom_test$juvenile_biomass_TF, pred_anom_pJ, anom_test$season, anom_clim_test)
+idx <- complete.cases(anom_test$juvenile_biomass_TF, pred_anom_pL, anom_test$season, anom_clim_test)
 y_test   <- anom_test$juvenile_biomass_TF[idx]
-y_pred   <- pred_anom_pJ[idx]
+y_pred   <- pred_anom_pL[idx]
 clim_use <- anom_clim_test[idx]
 SS_res <- sum((y_test - y_pred)^2)
 SS_tot <- sum((y_test - clim_use)^2)
-R2_anom_juvenile_pJ <- 1 - SS_res / SS_tot
+R2_anom_juvenile_pL <- 1 - SS_res / SS_tot
 
 
-print(R2_abso_juvenile_J)
-print(R2_abso_juvenile_pJ)
-print(R2_anom_juvenile_J)
-print(R2_anom_juvenile_pJ)
+print(R2_abso_juvenile_L)
+print(R2_abso_juvenile_pL)
+print(R2_anom_juvenile_L)
+print(R2_anom_juvenile_pL)
 
 ```
+
+R2 (absolute, real larvae)      = 0.354
+R2 (absolute, predicted larvae) = 0.185
+R2 (anomaly, real larvae)       = 0.662
+R2 (anomaly, predicted larvae)  = 0.520
 
 
 Adults (no juveniles)
@@ -802,10 +828,6 @@ gam80_abso_adultTF_all <- bam(
   adult_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -821,10 +843,6 @@ gam80_abso_adultTF_all <- bam(
     s(O2_L3, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -850,10 +868,6 @@ gam80_anom_adultTF_all <- bam(
   adult_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -869,10 +883,6 @@ gam80_anom_adultTF_all <- bam(
     s(O2_L3, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -894,10 +904,24 @@ gam80_anom_adultTF_all <- bam(
 )
 summary(gam80_anom_adultTF_all)
 
-abso_clim_train <- tapply(  abso_train$adult_biomass_TF,  abso_train$season,  mean,  na.rm = TRUE )
-abso_clim_test <- abso_clim_train[ abso_test$season ]
-anom_clim_train <- tapply(  anom_train$adult_biomass_TF,  anom_train$season,  mean,  na.rm = TRUE )
-anom_clim_test <- anom_clim_train[ anom_test$season ]
+#abso_clim_train <- tapply(  abso_train$adult_biomass_TF,  abso_train$season,  mean,  na.rm = TRUE )
+#abso_clim_test <- abso_clim_train[ abso_test$season ]
+#anom_clim_train <- tapply(  anom_train$adult_biomass_TF,  anom_train$season,  mean,  na.rm = TRUE )
+#anom_clim_test <- anom_clim_train[ anom_test$season ]
+
+# biomass climatologies at each lon, lat, season
+abso_clim_train <- aggregate(adult_biomass_TF ~ lon + lat + season, data = abso_train, FUN = mean, na.rm = TRUE)
+anom_clim_train <- aggregate(adult_biomass_TF ~ lon + lat + season, data = anom_train, FUN = mean, na.rm = TRUE)
+names(abso_clim_train)[4] <- "clim"
+names(anom_clim_train)[4] <- "clim"
+# Create matching keys
+key_abso_train <- paste(abso_clim_train$lon, abso_clim_train$lat, abso_clim_train$season)
+key_abso_test <- paste(abso_test$lon, abso_test$lat, abso_test$season)
+key_anom_train <- paste(anom_clim_train$lon, anom_clim_train$lat, anom_clim_train$season)
+key_anom_test <- paste(anom_test$lon, anom_test$lat, anom_test$season)
+# Assign the appropriate training climatology to every test observation
+abso_clim_test <- abso_clim_train$clim[ match(key_abso_test, key_abso_train) ]
+anom_clim_test <- anom_clim_train$clim[ match(key_anom_test, key_anom_train) ]
 
 pred_abso_all <- predict(gam80_abso_adultTF_all, newdata = abso_test)
 pred_anom_all <- predict(gam80_anom_adultTF_all, newdata = anom_test)
@@ -923,6 +947,9 @@ print(R2_anom_adult_all)
 
 ```
 
+R2 (absolute) = 0.159
+R2 (anomaly). = 0.243
+
 Adults with perfectly known juveniles
 
 ```{r}
@@ -933,10 +960,6 @@ gam80_abso_adultTF_allJ <- bam(
   adult_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -953,10 +976,6 @@ gam80_abso_adultTF_allJ <- bam(
     s(juvenile_biomass_TF, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -983,10 +1002,6 @@ gam80_anom_adultTF_allJ <- bam(
   adult_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -1003,10 +1018,6 @@ gam80_anom_adultTF_allJ <- bam(
     s(juvenile_biomass_TF, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -1029,10 +1040,24 @@ gam80_anom_adultTF_allJ <- bam(
 )
 summary(gam80_anom_adultTF_allJ)
 
-abso_clim_train <- tapply(  abso_train$adult_biomass_TF,  abso_train$season,  mean,  na.rm = TRUE )
-abso_clim_test <- abso_clim_train[ abso_test$season ]
-anom_clim_train <- tapply(  anom_train$adult_biomass_TF,  anom_train$season,  mean,  na.rm = TRUE )
-anom_clim_test <- anom_clim_train[ anom_test$season ]
+#abso_clim_train <- tapply(  abso_train$adult_biomass_TF,  abso_train$season,  mean,  na.rm = TRUE )
+#abso_clim_test <- abso_clim_train[ abso_test$season ]
+#anom_clim_train <- tapply(  anom_train$adult_biomass_TF,  anom_train$season,  mean,  na.rm = TRUE )
+#anom_clim_test <- anom_clim_train[ anom_test$season ]
+
+# biomass climatologies at each lon, lat, season
+abso_clim_train <- aggregate(adult_biomass_TF ~ lon + lat + season, data = abso_train, FUN = mean, na.rm = TRUE)
+anom_clim_train <- aggregate(adult_biomass_TF ~ lon + lat + season, data = anom_train, FUN = mean, na.rm = TRUE)
+names(abso_clim_train)[4] <- "clim"
+names(anom_clim_train)[4] <- "clim"
+# Create matching keys
+key_abso_train <- paste(abso_clim_train$lon, abso_clim_train$lat, abso_clim_train$season)
+key_abso_test <- paste(abso_test$lon, abso_test$lat, abso_test$season)
+key_anom_train <- paste(anom_clim_train$lon, anom_clim_train$lat, anom_clim_train$season)
+key_anom_test <- paste(anom_test$lon, anom_test$lat, anom_test$season)
+# Assign the appropriate training climatology to every test observation
+abso_clim_test <- abso_clim_train$clim[ match(key_abso_test, key_abso_train) ]
+anom_clim_test <- anom_clim_train$clim[ match(key_anom_test, key_anom_train) ]
 
 pred_abso_allJ <- predict(gam80_abso_adultTF_allJ, newdata = abso_test)
 pred_anom_allJ <- predict(gam80_anom_adultTF_allJ, newdata = anom_test)
@@ -1058,7 +1083,10 @@ print(R2_anom_adult_allJ)
 
 ```
 
-Adults with perfectly known juveniles
+R2 (absolute) = 0.270
+R2 (anomaly). = 0.316
+
+Adults with predicted juveniles
 
 ```{r}
 
@@ -1068,10 +1096,6 @@ gam80_abso_adultTF_allpJ <- bam(
   adult_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -1088,10 +1112,6 @@ gam80_abso_adultTF_allpJ <- bam(
     s(juvenile_biomass_TFpred_all, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -1118,10 +1138,6 @@ gam80_anom_adultTF_allpJ <- bam(
   adult_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -1138,10 +1154,6 @@ gam80_anom_adultTF_allpJ <- bam(
     s(juvenile_biomass_TFpred_all, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -1164,10 +1176,24 @@ gam80_anom_adultTF_allpJ <- bam(
 )
 summary(gam80_anom_adultTF_allpJ)
 
-abso_clim_train <- tapply(  abso_train$adult_biomass_TF,  abso_train$season,  mean,  na.rm = TRUE )
-abso_clim_test <- abso_clim_train[ abso_test$season ]
-anom_clim_train <- tapply(  anom_train$adult_biomass_TF,  anom_train$season,  mean,  na.rm = TRUE )
-anom_clim_test <- anom_clim_train[ anom_test$season ]
+#abso_clim_train <- tapply(  abso_train$adult_biomass_TF,  abso_train$season,  mean,  na.rm = TRUE )
+#abso_clim_test <- abso_clim_train[ abso_test$season ]
+#anom_clim_train <- tapply(  anom_train$adult_biomass_TF,  anom_train$season,  mean,  na.rm = TRUE )
+#anom_clim_test <- anom_clim_train[ anom_test$season ]
+
+# biomass climatologies at each lon, lat, season
+abso_clim_train <- aggregate(adult_biomass_TF ~ lon + lat + season, data = abso_train, FUN = mean, na.rm = TRUE)
+anom_clim_train <- aggregate(adult_biomass_TF ~ lon + lat + season, data = anom_train, FUN = mean, na.rm = TRUE)
+names(abso_clim_train)[4] <- "clim"
+names(anom_clim_train)[4] <- "clim"
+# Create matching keys
+key_abso_train <- paste(abso_clim_train$lon, abso_clim_train$lat, abso_clim_train$season)
+key_abso_test <- paste(abso_test$lon, abso_test$lat, abso_test$season)
+key_anom_train <- paste(anom_clim_train$lon, anom_clim_train$lat, anom_clim_train$season)
+key_anom_test <- paste(anom_test$lon, anom_test$lat, anom_test$season)
+# Assign the appropriate training climatology to every test observation
+abso_clim_test <- abso_clim_train$clim[ match(key_abso_test, key_abso_train) ]
+anom_clim_test <- anom_clim_train$clim[ match(key_anom_test, key_anom_train) ]
 
 pred_abso_allpJ <- predict(gam80_abso_adultTF_allpJ, newdata = abso_test)
 pred_anom_allpJ <- predict(gam80_anom_adultTF_allpJ, newdata = anom_test)
@@ -1193,6 +1219,10 @@ print(R2_abso_adult_allpJ)
 print(R2_anom_adult_allpJ)
 
 ```
+
+R2 (absolute) = 0.177
+R2 (anomaly)  = 0.250
+
 
 ```{r}
 
@@ -1244,10 +1274,24 @@ gam80_anom_adultTF_pJ <- bam(
 )
 summary(gam80_anom_adultTF_pJ)
 
-abso_clim_train <- tapply(  abso_train$adult_biomass_TF,  abso_train$season,  mean,  na.rm = TRUE )
-abso_clim_test <- abso_clim_train[ abso_test$season ]
-anom_clim_train <- tapply(  anom_train$adult_biomass_TF,  anom_train$season,  mean,  na.rm = TRUE )
-anom_clim_test <- anom_clim_train[ anom_test$season ]
+#abso_clim_train <- tapply(  abso_train$adult_biomass_TF,  abso_train$season,  mean,  na.rm = TRUE )
+#abso_clim_test <- abso_clim_train[ abso_test$season ]
+#anom_clim_train <- tapply(  anom_train$adult_biomass_TF,  anom_train$season,  mean,  na.rm = TRUE )
+#anom_clim_test <- anom_clim_train[ anom_test$season ]
+
+# biomass climatologies at each lon, lat, season
+abso_clim_train <- aggregate(adult_biomass_TF ~ lon + lat + season, data = abso_train, FUN = mean, na.rm = TRUE)
+anom_clim_train <- aggregate(adult_biomass_TF ~ lon + lat + season, data = anom_train, FUN = mean, na.rm = TRUE)
+names(abso_clim_train)[4] <- "clim"
+names(anom_clim_train)[4] <- "clim"
+# Create matching keys
+key_abso_train <- paste(abso_clim_train$lon, abso_clim_train$lat, abso_clim_train$season)
+key_abso_test <- paste(abso_test$lon, abso_test$lat, abso_test$season)
+key_anom_train <- paste(anom_clim_train$lon, anom_clim_train$lat, anom_clim_train$season)
+key_anom_test <- paste(anom_test$lon, anom_test$lat, anom_test$season)
+# Assign the appropriate training climatology to every test observation
+abso_clim_test <- abso_clim_train$clim[ match(key_abso_test, key_abso_train) ]
+anom_clim_test <- anom_clim_train$clim[ match(key_anom_test, key_anom_train) ]
 
 pred_abso_J <- predict(gam80_abso_adultTF_J, newdata = abso_test)
 pred_abso_pJ <- predict(gam80_abso_adultTF_pJ, newdata = abso_test)
@@ -1293,3 +1337,7 @@ print(R2_anom_adult_pJ)
 
 ```
 
+R2 (absolute, real juveniles)       = -0.649 
+R2 (absolute, predicted juveniles)  = -0.512
+R2 (anomaly, real juveniles)        = 0.105
+R2 (anomaly, predicted juveniles)   = 0.053

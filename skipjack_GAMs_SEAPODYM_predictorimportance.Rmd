@@ -78,26 +78,480 @@ Load GAMs
 ```{r}
 
 # Larvae
-gam_abso_larvaeTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_larvaeTF_all.rds")
-gam_anom_larvaeTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_larvaeTF_all.rds")
+gam_abso_larvaeTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_larvaeTF.rds")
+gam_anom_larvaeTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_larvaeTF.rds")
 
 # Juveniles
-gam_abso_juvenileTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_juvenileTF_all.rds")
-gam_abso_juvenileTF_allL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_juvenileTF_allL.rds")
-gam_anom_juvenileTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_juvenileTF_all.rds")
-gam_anom_juvenileTF_allL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_juvenileTF_allL.rds")
-gam_abso_juvenileTF_allpL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_juvenileTF_allpL.rds")
-gam_anom_juvenileTF_allpL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_juvenileTF_allpL.rds")
+gam_abso_juvenileTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_juvenileTF.rds")
+gam_abso_juvenileTF_allL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_juvenileTF_L.rds")
+gam_anom_juvenileTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_juvenileTF.rds")
+gam_anom_juvenileTF_allL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_juvenileTF_L.rds")
+gam_abso_juvenileTF_allpL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_juvenileTF_pL.rds")
+gam_anom_juvenileTF_allpL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_juvenileTF_pL.rds")
 
 # Adults
-gam_abso_adultTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_adultTF_all.rds")
-gam_abso_adultTF_allJ <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_adultTF_allJ.rds")
-gam_anom_adultTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_adultTF_all.rds")
-gam_anom_adultTF_allJ <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_adultTF_allJ.rds")
-gam_abso_adultTF_allpL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_adultTF_allpJ.rds")
-gam_anom_adultTF_allpL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_adultTF_allpJ.rds")
+gam_abso_adultTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_adultTF.rds")
+gam_abso_adultTF_allJ <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_adultTF_J.rds")
+gam_anom_adultTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_adultTF.rds")
+gam_anom_adultTF_allJ <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_adultTF_J.rds")
+gam_abso_adultTF_allpL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_adultTF_pJ.rds")
+gam_anom_adultTF_allpL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_adultTF_pJ.rds")
 
 ```
+
+
+
+Build up a model from scratch, trying each of the individual predictors within the subset, and record R2
+
+1. start with a baseline that tries to predict anomalous tuna biomass from cyclic seasonality and space
+
+```{r}
+
+k1 <- 5
+
+### baseline
+abso$season_num <- match(abso$season, c("DJF", "MAM", "JJA", "SON"))
+abso$season_num <- ifelse(abso$season == "DJF", 1,
+                  ifelse(abso$season == "MAM", 2,
+                  ifelse(abso$season == "JJA", 3,
+                  ifelse(abso$season == "SON", 4, NA))))
+
+
+gam_abso_larvaeTF_baseline <- bam(
+  larvae_biomass_TF ~
+    # tamed spatial baseline
+    s(lon,lat, bs="ds", k = 200) +
+    # seasonality
+    s(season_num, bs="cc", k=4),
+  data = abso,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 1
+)
+summary(gam_abso_larvaeTF_baseline)
+
+gam_abso_juvenileTF_baseline <- bam(
+  juvenile_biomass_TF ~
+    # tamed spatial baseline
+    s(lon,lat, bs="ds", k = 200) +
+    # seasonality
+    s(season_num, bs="cc", k=4),
+  data = abso,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 1
+)
+summary(gam_abso_juvenileTF_baseline)
+
+gam_abso_adultTF_baseline <- bam(
+  adult_biomass_TF ~
+    # tamed spatial baseline
+    s(lon,lat, bs="ds", k = 200) +
+    # seasonality
+    s(season_num, bs="cc", k=4),
+  data = abso,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 1
+)
+summary(gam_abso_adultTF_baseline)
+
+```
+
+
+Larval absolute (lat,lon, season) = 71.3%
+Juvenile absolute (lat,lon, season) = 71.2%
+Adult absolute (lat,lon, season) = 64.8%
+
+
+Larval predictor importance, one at a time
+
+SST, NPP
+
+```{r}
+
+
+k1 <- 5
+
+
+gam_abso_larvaeTF_sstG <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(sst, k = k1, bs = "ts"))
+summary(gam_abso_larvaeTF_sstG)
+
+gam_abso_larvaeTF_sstV <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_sstV)
+
+gam_abso_larvaeTF_sst <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(sst, k = k1, bs = "ts") + ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_sst)
+
+gam_abso_larvaeTF_ppG <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(pp, k = k1, bs = "ts"))
+summary(gam_abso_larvaeTF_ppG)
+
+gam_abso_larvaeTF_ppV <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_ppV)
+
+gam_abso_larvaeTF_pp <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(pp, k = k1, bs = "ts") + ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_pp)
+
+```
+
+
+```{r}
+
+
+gam_abso_larvaeTF_T_L1G <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(T_L1, k = k1, bs = "ts"))
+summary(gam_abso_larvaeTF_T_L1G)
+
+gam_abso_larvaeTF_T_L1V <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_T_L1V)
+
+gam_abso_larvaeTF_T_L1 <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(T_L1, k = k1, bs = "ts") + ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_T_L1)
+
+gam_abso_larvaeTF_T_L2G <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(T_L2, k = k1, bs = "ts"))
+summary(gam_abso_larvaeTF_T_L2G)
+
+gam_abso_larvaeTF_T_L2V <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_T_L2V)
+
+gam_abso_larvaeTF_T_L2 <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(T_L2, k = k1, bs = "ts") + ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_T_L2)
+
+gam_abso_larvaeTF_T_L3G <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(T_L3, k = k1, bs = "ts"))
+summary(gam_abso_larvaeTF_T_L3G)
+
+gam_abso_larvaeTF_T_L3V <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + ti(T_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_T_L3V)
+
+gam_abso_larvaeTF_T_L3 <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(T_L3, k = k1, bs = "ts") + ti(T_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_T_L3)
+
+gam_abso_larvaeTF_U_L1G <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(U_L1, k = k1, bs = "ts"))
+summary(gam_abso_larvaeTF_U_L1G)
+
+gam_abso_larvaeTF_U_L1V <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + ti(U_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_U_L1V)
+
+gam_abso_larvaeTF_U_L1 <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(U_L1, k = k1, bs = "ts") + ti(U_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_U_L1)
+
+gam_abso_larvaeTF_U_L2G <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(U_L2, k = k1, bs = "ts"))
+summary(gam_abso_larvaeTF_U_L2G)
+
+gam_abso_larvaeTF_U_L2V <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + ti(U_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_U_L2V)
+
+gam_abso_larvaeTF_U_L2 <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(U_L2, k = k1, bs = "ts") + ti(U_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_U_L2)
+
+gam_abso_larvaeTF_U_L3G <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(U_L3, k = k1, bs = "ts"))
+summary(gam_abso_larvaeTF_U_L3G)
+
+gam_abso_larvaeTF_U_L3V <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + ti(U_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_U_L3V)
+
+gam_abso_larvaeTF_U_L3 <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(U_L3, k = k1, bs = "ts") + ti(U_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_U_L3)
+
+
+```
+
+
+```{r}
+
+
+
+gam_abso_larvaeTF_V_L1G <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(V_L1, k = k1, bs = "ts"))
+summary(gam_abso_larvaeTF_V_L1G)
+
+gam_abso_larvaeTF_V_L1V <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + ti(V_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_V_L1V)
+
+gam_abso_larvaeTF_V_L1 <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(V_L1, k = k1, bs = "ts") + ti(V_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_V_L1)
+
+gam_abso_larvaeTF_V_L2G <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(V_L2, k = k1, bs = "ts"))
+summary(gam_abso_larvaeTF_V_L2G)
+
+gam_abso_larvaeTF_V_L2V <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + ti(V_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_V_L2V)
+
+gam_abso_larvaeTF_V_L2 <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(V_L2, k = k1, bs = "ts") + ti(V_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_V_L2)
+
+gam_abso_larvaeTF_V_L3G <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(V_L3, k = k1, bs = "ts"))
+summary(gam_abso_larvaeTF_V_L3G)
+
+gam_abso_larvaeTF_V_L3V <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + ti(V_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_V_L3V)
+
+gam_abso_larvaeTF_V_L3 <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(V_L3, k = k1, bs = "ts") + ti(V_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_V_L3)
+
+gam_abso_larvaeTF_O2_L1G <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(O2_L1, k = k1, bs = "ts"))
+summary(gam_abso_larvaeTF_O2_L1G)
+
+gam_abso_larvaeTF_O2_L1V <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + ti(O2_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_O2_L1V)
+
+gam_abso_larvaeTF_O2_L1 <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(O2_L1, k = k1, bs = "ts") + ti(O2_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_O2_L1)
+
+gam_abso_larvaeTF_O2_L2G <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(O2_L2, k = k1, bs = "ts"))
+summary(gam_abso_larvaeTF_O2_L2G)
+
+gam_abso_larvaeTF_O2_L2V <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_O2_L2V)
+
+gam_abso_larvaeTF_O2_L2 <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(O2_L2, k = k1, bs = "ts") + ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_O2_L2)
+
+gam_abso_larvaeTF_O2_L3G <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(O2_L3, k = k1, bs = "ts"))
+summary(gam_abso_larvaeTF_O2_L3G)
+
+gam_abso_larvaeTF_O2_L3V <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + ti(O2_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_O2_L3V)
+
+gam_abso_larvaeTF_O2_L3 <- update(gam_abso_larvaeTF_baseline,
+                       . ~ . + s(O2_L3, k = k1, bs = "ts") + ti(O2_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_abso_larvaeTF_O2_L3)
+
+```
+
+
+Do forward selection for larvae:
+
+```{r}
+
+k1 <- 5
+
+# vars: character vector of predictor names
+# k1:   your chosen k for the 1D smooths
+build_terms <- function(vars, k1) {
+  if (length(vars) == 0L) return(character(0))
+
+  g_terms  <- sprintf("s(%s, k=%s, bs='ts')", vars, k1)
+  ti_terms <- sprintf(
+    "ti(%s, lon, lat, bs=c('cr','tp','tp'), k=c(%s,120), m=2)",
+    vars, k1
+  )
+
+  c(g_terms, ti_terms)  # return all terms as a character vector
+}
+
+forward_gam_stepwise <- function(predictors,
+                                 preselected = NULL,   # e.g. "T_L1"
+                                 data,
+                                 baseline_terms,
+                                 k1,
+                                 thresh = 0.01,        # 1 percentage point
+                                 verbose = TRUE,
+                                 ...) {
+
+  ## ---- set up selected / remaining ----
+  selected  <- unique(preselected)
+  remaining <- setdiff(predictors, selected)
+
+  ## ---- fit baseline (+ preselected, if any) ----
+  rhs_terms <- c(baseline_terms, build_terms(selected, k1))
+  rhs <- paste(rhs_terms, collapse = " + ")
+  base_formula <- as.formula(paste("larvae_biomass_TF ~", rhs))
+
+  if (verbose) {
+    cat("Fitting starting model with:\n  ",
+        if (length(selected)) paste(selected, collapse = ", ") else "baseline only",
+        "\n")
+  }
+
+  best_model <- bam(base_formula, data = data, ...)
+  current_dev <- summary(best_model)$dev.expl
+
+  if (verbose)
+    cat("Starting deviance explained:",
+        round(100 * current_dev, 2), "%\n")
+
+  trace <- data.frame(
+    step     = integer(0),
+    added    = character(0),
+    dev_expl = numeric(0),
+    delta    = numeric(0),
+    stringsAsFactors = FALSE
+  )
+
+  step <- 0L
+
+  ## ---- forward selection loop ----
+  repeat {
+    if (length(remaining) == 0L) {
+      if (verbose) cat("No predictors left.\n")
+      break
+    }
+
+    step <- step + 1L
+    if (verbose)
+      cat("\nStep", step, "- testing", length(remaining),
+          "candidate predictors\n")
+
+    best_var_step <- NULL
+    best_dev_step <- current_dev
+    best_model_step <- NULL
+
+    ## test each remaining predictor
+    for (v in remaining) {
+      rhs_terms_v <- c(
+        baseline_terms,
+        build_terms(selected, k1),
+        build_terms(v, k1)
+      )
+      rhs_v <- paste(rhs_terms_v, collapse = " + ")
+      f_v   <- as.formula(paste("larvae_biomass_TF ~", rhs_v))
+
+      m_v <- bam(f_v, data = data, ...)
+
+      dev_v <- summary(m_v)$dev.expl
+
+      if (verbose)
+        cat("  ", v, "->", round(100 * dev_v, 2), "% DE\n")
+
+      if (dev_v > best_dev_step) {
+        best_dev_step   <- dev_v
+        best_var_step   <- v
+        best_model_step <- m_v
+      }
+
+      ## free memory from this candidate
+      rm(m_v); gc()
+    }
+
+    ## nothing improved?
+    delta <- best_dev_step - current_dev
+
+    if (is.null(best_var_step) || delta < thresh) {
+      if (verbose)
+        cat("Best improvement <", 100 * thresh,
+            "percentage points (ΔDE =", round(100 * delta, 2),
+            "). Stopping.\n")
+      break
+    }
+
+    ## accept the best candidate
+    selected    <- c(selected, best_var_step)
+    remaining   <- setdiff(remaining, best_var_step)
+    current_dev <- best_dev_step
+    best_model  <- best_model_step
+
+    trace <- rbind(trace, data.frame(
+      step     = step,
+      added    = best_var_step,
+      dev_expl = current_dev,
+      delta    = delta,
+      stringsAsFactors = FALSE
+    ))
+
+    if (verbose) {
+      cat("Selected:", best_var_step,
+          " | total DE =", round(100 * current_dev, 2), "%\n")
+    }
+
+    rm(best_model_step); gc()
+  }
+
+  list(
+    selected    = selected,
+    trace       = trace,
+    final_model = best_model
+  )
+}
+
+```
+
+
+```{r}
+
+
+### baseline
+abso$season_num <- match(abso$season, c("DJF", "MAM", "JJA", "SON"))
+abso$season_num <- ifelse(abso$season == "DJF", 1,
+                  ifelse(abso$season == "MAM", 2,
+                  ifelse(abso$season == "JJA", 3,
+                  ifelse(abso$season == "SON", 4, NA))))
+
+
+baseline_terms <- "s(lon,lat,bs='ds',k=200) + s(season_num,bs='cc',k=4)"
+
+predictors <- c(
+  "sst","pp",
+  "T_L1","T_L2","T_L3",
+  "U_L1","U_L2","U_L3",
+  "V_L1","V_L2","V_L3",
+  "O2_L1","O2_L2","O2_L3"
+)
+
+# We know T_L1 is best, so preselect it
+res <- forward_gam_stepwise(
+  predictors     = predictors,
+  preselected    = "pp",
+  data           = abso,
+  baseline_terms = baseline_terms,
+  k1             = k1,
+  thresh         = 0.01,        # 1 percentage point DE
+  method         = "fREML",
+  select         = TRUE,
+  cluster        = cl,
+  gc.level       = 2
+)
+
+res$selected
+res$trace
+summary(res$final_model)
+
+
+```
+
+
 
 
 Build up a model from scratch, trying each of the individual predictors within the subset, and record R2
@@ -115,6 +569,34 @@ anom$season_num <- ifelse(anom$season == "DJF", 1,
                   ifelse(anom$season == "JJA", 3,
                   ifelse(anom$season == "SON", 4, NA))))
 
+gam_anom_larvaeTF_baseline <- bam(
+  larvae_biomass_TF ~
+    # tamed spatial baseline
+    s(lon,lat, bs="ds", k = 200) +
+    # seasonality
+    s(season_num, bs="cc", k=4),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 1
+)
+summary(gam_anom_larvaeTF_baseline)
+
+gam_anom_juvenileTF_baseline <- bam(
+  juvenile_biomass_TF ~
+    # tamed spatial baseline
+    s(lon,lat, bs="ds", k = 200) +
+    # seasonality
+    s(season_num, bs="cc", k=4),
+  data = anom,
+  method = "fREML",
+  select = TRUE,
+  cluster = cl,
+  gc.level = 1
+)
+summary(gam_anom_juvenileTF_baseline)
+
 gam_anom_adultTF_baseline <- bam(
   adult_biomass_TF ~
     # tamed spatial baseline
@@ -130,6 +612,777 @@ gam_anom_adultTF_baseline <- bam(
 summary(gam_anom_adultTF_baseline)
 
 ```
+
+Explained variance of anomalies very low with only season and lon,lat position
+
+larvae = 1.23%
+juveniles = 1.06%
+adults - 0.0286%
+
+
+Larval predictor importance, one at a time
+
+SST, NPP
+
+```{r}
+
+
+k1 <- 5
+
+
+gam_anom_larvaeTF_sstG <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(sst, k = k1, bs = "ts"))
+summary(gam_anom_larvaeTF_sstG)
+
+gam_anom_larvaeTF_sstV <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_sstV)
+
+gam_anom_larvaeTF_sst <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(sst, k = k1, bs = "ts") + ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_sst)
+
+gam_anom_larvaeTF_ppG <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(pp, k = k1, bs = "ts"))
+summary(gam_anom_larvaeTF_ppG)
+
+gam_anom_larvaeTF_ppV <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_ppV)
+
+gam_anom_larvaeTF_pp <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(pp, k = k1, bs = "ts") + ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_pp)
+
+
+```
+
+T_L1, T_L2, T_L3, U_L1, U_L2, U_L3
+
+```{r}
+
+gam_anom_larvaeTF_T_L1G <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(T_L1, k = k1, bs = "ts"))
+summary(gam_anom_larvaeTF_T_L1G)
+
+gam_anom_larvaeTF_T_L1V <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_T_L1V)
+
+gam_anom_larvaeTF_T_L1 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(T_L1, k = k1, bs = "ts") + ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_T_L1)
+
+gam_anom_larvaeTF_T_L2G <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(T_L2, k = k1, bs = "ts"))
+summary(gam_anom_larvaeTF_T_L2G)
+
+gam_anom_larvaeTF_T_L2V <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_T_L2V)
+
+gam_anom_larvaeTF_T_L2 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(T_L2, k = k1, bs = "ts") + ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_T_L2)
+
+gam_anom_larvaeTF_T_L3G <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(T_L3, k = k1, bs = "ts"))
+summary(gam_anom_larvaeTF_T_L3G)
+
+gam_anom_larvaeTF_T_L3V <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + ti(T_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_T_L3V)
+
+gam_anom_larvaeTF_T_L3 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(T_L3, k = k1, bs = "ts") + ti(T_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_T_L3)
+
+gam_anom_larvaeTF_U_L1G <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(U_L1, k = k1, bs = "ts"))
+summary(gam_anom_larvaeTF_U_L1G)
+
+gam_anom_larvaeTF_U_L1V <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + ti(U_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_U_L1V)
+
+gam_anom_larvaeTF_U_L1 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(U_L1, k = k1, bs = "ts") + ti(U_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_U_L1)
+
+gam_anom_larvaeTF_U_L2G <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(U_L2, k = k1, bs = "ts"))
+summary(gam_anom_larvaeTF_U_L2G)
+
+gam_anom_larvaeTF_U_L2V <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + ti(U_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_U_L2V)
+
+gam_anom_larvaeTF_U_L2 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(U_L2, k = k1, bs = "ts") + ti(U_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_U_L2)
+
+gam_anom_larvaeTF_U_L3G <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(U_L3, k = k1, bs = "ts"))
+summary(gam_anom_larvaeTF_U_L3G)
+
+gam_anom_larvaeTF_U_L3V <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + ti(U_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_U_L3V)
+
+gam_anom_larvaeTF_U_L3 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(U_L3, k = k1, bs = "ts") + ti(U_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_U_L3)
+
+```
+
+V_L1, V_L2, V_L3, O2_L1, O2_L2, O2_L3
+
+```{r}
+
+
+gam_anom_larvaeTF_V_L1G <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(V_L1, k = k1, bs = "ts"))
+summary(gam_anom_larvaeTF_V_L1G)
+
+gam_anom_larvaeTF_V_L1V <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + ti(V_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_V_L1V)
+
+gam_anom_larvaeTF_V_L1 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(V_L1, k = k1, bs = "ts") + ti(V_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_V_L1)
+
+gam_anom_larvaeTF_V_L2G <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(V_L2, k = k1, bs = "ts"))
+summary(gam_anom_larvaeTF_V_L2G)
+
+gam_anom_larvaeTF_V_L2V <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + ti(V_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_V_L2V)
+
+gam_anom_larvaeTF_V_L2 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(V_L2, k = k1, bs = "ts") + ti(V_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_V_L2)
+
+gam_anom_larvaeTF_V_L3G <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(V_L3, k = k1, bs = "ts"))
+summary(gam_anom_larvaeTF_V_L3G)
+
+gam_anom_larvaeTF_V_L3V <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + ti(V_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_V_L3V)
+
+gam_anom_larvaeTF_V_L3 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(V_L3, k = k1, bs = "ts") + ti(V_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_V_L3)
+
+gam_anom_larvaeTF_O2_L1G <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(O2_L1, k = k1, bs = "ts"))
+summary(gam_anom_larvaeTF_O2_L1G)
+
+gam_anom_larvaeTF_O2_L1V <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + ti(O2_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_O2_L1V)
+
+gam_anom_larvaeTF_O2_L1 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(O2_L1, k = k1, bs = "ts") + ti(O2_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_O2_L1)
+
+gam_anom_larvaeTF_O2_L2G <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(O2_L2, k = k1, bs = "ts"))
+summary(gam_anom_larvaeTF_O2_L2G)
+
+gam_anom_larvaeTF_O2_L2V <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_O2_L2V)
+
+gam_anom_larvaeTF_O2_L2 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(O2_L2, k = k1, bs = "ts") + ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_O2_L2)
+
+gam_anom_larvaeTF_O2_L3G <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(O2_L3, k = k1, bs = "ts"))
+summary(gam_anom_larvaeTF_O2_L3G)
+
+gam_anom_larvaeTF_O2_L3V <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + ti(O2_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_O2_L3V)
+
+gam_anom_larvaeTF_O2_L3 <- update(gam_anom_larvaeTF_baseline,
+                       . ~ . + s(O2_L3, k = k1, bs = "ts") + ti(O2_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_larvaeTF_O2_L3)
+
+```
+
+Do forward selection for larvae:
+
+```{r}
+
+k1 <- 5
+
+# vars: character vector of predictor names
+# k1:   your chosen k for the 1D smooths
+build_terms <- function(vars, k1) {
+  if (length(vars) == 0L) return(character(0))
+
+  g_terms  <- sprintf("s(%s, k=%s, bs='ts')", vars, k1)
+  ti_terms <- sprintf(
+    "ti(%s, lon, lat, bs=c('cr','tp','tp'), k=c(%s,120), m=2)",
+    vars, k1
+  )
+
+  c(g_terms, ti_terms)  # return all terms as a character vector
+}
+
+forward_gam_stepwise <- function(predictors,
+                                 preselected = NULL,   # e.g. "T_L1"
+                                 data,
+                                 baseline_terms,
+                                 k1,
+                                 thresh = 0.01,        # 1 percentage point
+                                 verbose = TRUE,
+                                 ...) {
+
+  ## ---- set up selected / remaining ----
+  selected  <- unique(preselected)
+  remaining <- setdiff(predictors, selected)
+
+  ## ---- fit baseline (+ preselected, if any) ----
+  rhs_terms <- c(baseline_terms, build_terms(selected, k1))
+  rhs <- paste(rhs_terms, collapse = " + ")
+  base_formula <- as.formula(paste("larvae_biomass_TF ~", rhs))
+
+  if (verbose) {
+    cat("Fitting starting model with:\n  ",
+        if (length(selected)) paste(selected, collapse = ", ") else "baseline only",
+        "\n")
+  }
+
+  best_model <- bam(base_formula, data = data, ...)
+  current_dev <- summary(best_model)$dev.expl
+
+  if (verbose)
+    cat("Starting deviance explained:",
+        round(100 * current_dev, 2), "%\n")
+
+  trace <- data.frame(
+    step     = integer(0),
+    added    = character(0),
+    dev_expl = numeric(0),
+    delta    = numeric(0),
+    stringsAsFactors = FALSE
+  )
+
+  step <- 0L
+
+  ## ---- forward selection loop ----
+  repeat {
+    if (length(remaining) == 0L) {
+      if (verbose) cat("No predictors left.\n")
+      break
+    }
+
+    step <- step + 1L
+    if (verbose)
+      cat("\nStep", step, "- testing", length(remaining),
+          "candidate predictors\n")
+
+    best_var_step <- NULL
+    best_dev_step <- current_dev
+    best_model_step <- NULL
+
+    ## test each remaining predictor
+    for (v in remaining) {
+      rhs_terms_v <- c(
+        baseline_terms,
+        build_terms(selected, k1),
+        build_terms(v, k1)
+      )
+      rhs_v <- paste(rhs_terms_v, collapse = " + ")
+      f_v   <- as.formula(paste("larvae_biomass_TF ~", rhs_v))
+
+      m_v <- bam(f_v, data = data, ...)
+
+      dev_v <- summary(m_v)$dev.expl
+
+      if (verbose)
+        cat("  ", v, "->", round(100 * dev_v, 2), "% DE\n")
+
+      if (dev_v > best_dev_step) {
+        best_dev_step   <- dev_v
+        best_var_step   <- v
+        best_model_step <- m_v
+      }
+
+      ## free memory from this candidate
+      rm(m_v); gc()
+    }
+
+    ## nothing improved?
+    delta <- best_dev_step - current_dev
+
+    if (is.null(best_var_step) || delta < thresh) {
+      if (verbose)
+        cat("Best improvement <", 100 * thresh,
+            "percentage points (ΔDE =", round(100 * delta, 2),
+            "). Stopping.\n")
+      break
+    }
+
+    ## accept the best candidate
+    selected    <- c(selected, best_var_step)
+    remaining   <- setdiff(remaining, best_var_step)
+    current_dev <- best_dev_step
+    best_model  <- best_model_step
+
+    trace <- rbind(trace, data.frame(
+      step     = step,
+      added    = best_var_step,
+      dev_expl = current_dev,
+      delta    = delta,
+      stringsAsFactors = FALSE
+    ))
+
+    if (verbose) {
+      cat("Selected:", best_var_step,
+          " | total DE =", round(100 * current_dev, 2), "%\n")
+    }
+
+    rm(best_model_step); gc()
+  }
+
+  list(
+    selected    = selected,
+    trace       = trace,
+    final_model = best_model
+  )
+}
+
+```
+
+
+```{r}
+
+### baseline
+anom$season_num <- match(anom$season, c("DJF", "MAM", "JJA", "SON"))
+anom$season_num <- ifelse(anom$season == "DJF", 1,
+                  ifelse(anom$season == "MAM", 2,
+                  ifelse(anom$season == "JJA", 3,
+                  ifelse(anom$season == "SON", 4, NA))))
+
+
+baseline_terms <- "s(lon,lat,bs='ds',k=200) + s(season_num,bs='cc',k=4)"
+
+predictors <- c(
+  "sst","pp",
+  "T_L1","T_L2","T_L3",
+  "U_L1","U_L2","U_L3",
+  "V_L1","V_L2","V_L3",
+  "O2_L1","O2_L2","O2_L3"
+)
+
+# We know T_L1 is best, so preselect it
+res <- forward_gam_stepwise(
+  predictors     = predictors,
+  preselected    = "pp",
+  data           = anom,
+  baseline_terms = baseline_terms,
+  k1             = k1,
+  thresh         = 0.01,        # 1 percentage point DE
+  method         = "fREML",
+  select         = TRUE,
+  cluster        = cl,
+  gc.level       = 2
+)
+
+res$selected
+res$trace
+summary(res$final_model)
+
+
+```
+
+
+
+
+
+
+```{r}
+
+k1 <- 5
+
+
+gam_anom_juvenileTF_sstG <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(sst, k = k1, bs = "ts"))
+summary(gam_anom_juvenileTF_sstG)
+
+gam_anom_juvenileTF_sstV <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_sstV)
+
+gam_anom_juvenileTF_sst <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(sst, k = k1, bs = "ts") + ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_sst)
+
+gam_anom_juvenileTF_ppG <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(pp, k = k1, bs = "ts"))
+summary(gam_anom_juvenileTF_ppG)
+
+gam_anom_juvenileTF_ppV <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_ppV)
+
+gam_anom_juvenileTF_pp <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(pp, k = k1, bs = "ts") + ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_pp)
+
+
+```
+
+```{r}
+
+gam_anom_juvenileTF_T_L1G <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(T_L1, k = k1, bs = "ts"))
+summary(gam_anom_juvenileTF_T_L1G)
+
+gam_anom_juvenileTF_T_L1V <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_T_L1V)
+
+gam_anom_juvenileTF_T_L1 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(T_L1, k = k1, bs = "ts") + ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_T_L1)
+
+gam_anom_juvenileTF_T_L2G <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(T_L2, k = k1, bs = "ts"))
+summary(gam_anom_juvenileTF_T_L2G)
+
+gam_anom_juvenileTF_T_L2V <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_T_L2V)
+
+gam_anom_juvenileTF_T_L2 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(T_L2, k = k1, bs = "ts") + ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_T_L2)
+
+gam_anom_juvenileTF_T_L3G <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(T_L3, k = k1, bs = "ts"))
+summary(gam_anom_juvenileTF_T_L3G)
+
+gam_anom_juvenileTF_T_L3V <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + ti(T_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_T_L3V)
+
+gam_anom_juvenileTF_T_L3 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(T_L3, k = k1, bs = "ts") + ti(T_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_T_L3)
+
+gam_anom_juvenileTF_U_L1G <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(U_L1, k = k1, bs = "ts"))
+summary(gam_anom_juvenileTF_U_L1G)
+
+gam_anom_juvenileTF_U_L1V <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + ti(U_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_U_L1V)
+
+gam_anom_juvenileTF_U_L1 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(U_L1, k = k1, bs = "ts") + ti(U_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_U_L1)
+
+gam_anom_juvenileTF_U_L2G <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(U_L2, k = k1, bs = "ts"))
+summary(gam_anom_juvenileTF_U_L2G)
+
+gam_anom_juvenileTF_U_L2V <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + ti(U_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_U_L2V)
+
+gam_anom_juvenileTF_U_L2 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(U_L2, k = k1, bs = "ts") + ti(U_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_U_L2)
+
+gam_anom_juvenileTF_U_L3G <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(U_L3, k = k1, bs = "ts"))
+summary(gam_anom_juvenileTF_U_L3G)
+
+gam_anom_juvenileTF_U_L3V <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + ti(U_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_U_L3V)
+
+gam_anom_juvenileTF_U_L3 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(U_L3, k = k1, bs = "ts") + ti(U_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_U_L3)
+
+```
+
+```{r}
+
+gam_anom_juvenileTF_V_L1G <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(V_L1, k = k1, bs = "ts"))
+summary(gam_anom_juvenileTF_V_L1G)
+
+gam_anom_juvenileTF_V_L1V <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + ti(V_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_V_L1V)
+
+gam_anom_juvenileTF_V_L1 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(V_L1, k = k1, bs = "ts") + ti(V_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_V_L1)
+
+gam_anom_juvenileTF_V_L2G <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(V_L2, k = k1, bs = "ts"))
+summary(gam_anom_juvenileTF_V_L2G)
+
+gam_anom_juvenileTF_V_L2V <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + ti(V_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_V_L2V)
+
+gam_anom_juvenileTF_V_L2 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(V_L2, k = k1, bs = "ts") + ti(V_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_V_L2)
+
+gam_anom_juvenileTF_V_L3G <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(V_L3, k = k1, bs = "ts"))
+summary(gam_anom_juvenileTF_V_L3G)
+
+gam_anom_juvenileTF_V_L3V <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + ti(V_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_V_L3V)
+
+gam_anom_juvenileTF_V_L3 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(V_L3, k = k1, bs = "ts") + ti(V_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_V_L3)
+
+gam_anom_juvenileTF_O2_L1G <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(O2_L1, k = k1, bs = "ts"))
+summary(gam_anom_juvenileTF_O2_L1G)
+
+gam_anom_juvenileTF_O2_L1V <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + ti(O2_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_O2_L1V)
+
+gam_anom_juvenileTF_O2_L1 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(O2_L1, k = k1, bs = "ts") + ti(O2_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_O2_L1)
+
+gam_anom_juvenileTF_O2_L2G <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(O2_L2, k = k1, bs = "ts"))
+summary(gam_anom_juvenileTF_O2_L2G)
+
+gam_anom_juvenileTF_O2_L2V <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_O2_L2V)
+
+gam_anom_juvenileTF_O2_L2 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(O2_L2, k = k1, bs = "ts") + ti(O2_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_O2_L2)
+
+gam_anom_juvenileTF_O2_L3G <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(O2_L3, k = k1, bs = "ts"))
+summary(gam_anom_juvenileTF_O2_L3G)
+
+gam_anom_juvenileTF_O2_L3V <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + ti(O2_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_O2_L3V)
+
+gam_anom_juvenileTF_O2_L3 <- update(gam_anom_juvenileTF_baseline,
+                       . ~ . + s(O2_L3, k = k1, bs = "ts") + ti(O2_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
+summary(gam_anom_juvenileTF_O2_L3)
+
+```
+
+
+
+
+
+Do forward selection for juveniles:
+
+```{r}
+
+k1 <- 5
+
+# vars: character vector of predictor names
+# k1:   your chosen k for the 1D smooths
+build_terms <- function(vars, k1) {
+  if (length(vars) == 0L) return(character(0))
+
+  g_terms  <- sprintf("s(%s, k=%s, bs='ts')", vars, k1)
+  ti_terms <- sprintf(
+    "ti(%s, lon, lat, bs=c('cr','tp','tp'), k=c(%s,120), m=2)",
+    vars, k1
+  )
+
+  c(g_terms, ti_terms)  # return all terms as a character vector
+}
+
+forward_gam_stepwise <- function(predictors,
+                                 preselected = NULL,   # e.g. "T_L1"
+                                 data,
+                                 baseline_terms,
+                                 k1,
+                                 thresh = 0.01,        # 1 percentage point
+                                 verbose = TRUE,
+                                 ...) {
+
+  ## ---- set up selected / remaining ----
+  selected  <- unique(preselected)
+  remaining <- setdiff(predictors, selected)
+
+  ## ---- fit baseline (+ preselected, if any) ----
+  rhs_terms <- c(baseline_terms, build_terms(selected, k1))
+  rhs <- paste(rhs_terms, collapse = " + ")
+  base_formula <- as.formula(paste("juvenile_biomass_TF ~", rhs))
+
+  if (verbose) {
+    cat("Fitting starting model with:\n  ",
+        if (length(selected)) paste(selected, collapse = ", ") else "baseline only",
+        "\n")
+  }
+
+  best_model <- bam(base_formula, data = data, ...)
+  current_dev <- summary(best_model)$dev.expl
+
+  if (verbose)
+    cat("Starting deviance explained:",
+        round(100 * current_dev, 2), "%\n")
+
+  trace <- data.frame(
+    step     = integer(0),
+    added    = character(0),
+    dev_expl = numeric(0),
+    delta    = numeric(0),
+    stringsAsFactors = FALSE
+  )
+
+  step <- 0L
+
+  ## ---- forward selection loop ----
+  repeat {
+    if (length(remaining) == 0L) {
+      if (verbose) cat("No predictors left.\n")
+      break
+    }
+
+    step <- step + 1L
+    if (verbose)
+      cat("\nStep", step, "- testing", length(remaining),
+          "candidate predictors\n")
+
+    best_var_step <- NULL
+    best_dev_step <- current_dev
+    best_model_step <- NULL
+
+    ## test each remaining predictor
+    for (v in remaining) {
+      rhs_terms_v <- c(
+        baseline_terms,
+        build_terms(selected, k1),
+        build_terms(v, k1)
+      )
+      rhs_v <- paste(rhs_terms_v, collapse = " + ")
+      f_v   <- as.formula(paste("juvenile_biomass_TF ~", rhs_v))
+
+      m_v <- bam(f_v, data = data, ...)
+
+      dev_v <- summary(m_v)$dev.expl
+
+      if (verbose)
+        cat("  ", v, "->", round(100 * dev_v, 2), "% DE\n")
+
+      if (dev_v > best_dev_step) {
+        best_dev_step   <- dev_v
+        best_var_step   <- v
+        best_model_step <- m_v
+      }
+
+      ## free memory from this candidate
+      rm(m_v); gc()
+    }
+
+    ## nothing improved?
+    delta <- best_dev_step - current_dev
+
+    if (is.null(best_var_step) || delta < thresh) {
+      if (verbose)
+        cat("Best improvement <", 100 * thresh,
+            "percentage points (ΔDE =", round(100 * delta, 2),
+            "). Stopping.\n")
+      break
+    }
+
+    ## accept the best candidate
+    selected    <- c(selected, best_var_step)
+    remaining   <- setdiff(remaining, best_var_step)
+    current_dev <- best_dev_step
+    best_model  <- best_model_step
+
+    trace <- rbind(trace, data.frame(
+      step     = step,
+      added    = best_var_step,
+      dev_expl = current_dev,
+      delta    = delta,
+      stringsAsFactors = FALSE
+    ))
+
+    if (verbose) {
+      cat("Selected:", best_var_step,
+          " | total DE =", round(100 * current_dev, 2), "%\n")
+    }
+
+    rm(best_model_step); gc()
+  }
+
+  list(
+    selected    = selected,
+    trace       = trace,
+    final_model = best_model
+  )
+}
+
+```
+
+
+```{r}
+
+### baseline
+anom$season_num <- match(anom$season, c("DJF", "MAM", "JJA", "SON"))
+anom$season_num <- ifelse(anom$season == "DJF", 1,
+                  ifelse(anom$season == "MAM", 2,
+                  ifelse(anom$season == "JJA", 3,
+                  ifelse(anom$season == "SON", 4, NA))))
+
+
+baseline_terms <- "s(lon,lat,bs='ds',k=200) + s(season_num,bs='cc',k=4)"
+
+predictors <- c(
+  "sst","pp",
+  "T_L1","T_L2","T_L3",
+  "U_L1","U_L2","U_L3",
+  "V_L1","V_L2","V_L3",
+  "O2_L1","O2_L2","O2_L3"
+)
+
+# We know PP is best, so preselect it
+res <- forward_gam_stepwise(
+  predictors     = predictors,
+  preselected    = "pp",
+  data           = anom,
+  baseline_terms = baseline_terms,
+  k1             = k1,
+  thresh         = 0.01,        # 1 percentage point DE
+  method         = "fREML",
+  select         = TRUE,
+  cluster        = cl,
+  gc.level       = 2
+)
+
+res$selected
+res$trace
+summary(res$final_model)
+
+
+```
+
 
 ```{r}
 
@@ -207,6 +1460,12 @@ gam_anom_adultTF_U_L3 <- update(gam_anom_adultTF_baseline,
                        . ~ . + s(U_L3, k = k1, bs = "ts") + ti(U_L3, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
 summary(gam_anom_adultTF_U_L3)
 
+```
+
+
+```{r}
+
+
 gam_anom_adultTF_V_L1G <- update(gam_anom_adultTF_baseline,
                        . ~ . + s(V_L1, k = k1, bs = "ts"))
 summary(gam_anom_adultTF_V_L1G)
@@ -282,7 +1541,6 @@ summary(gam_anom_adultTF_O2_L3)
 
 ```
 
-
 Assess explanatory power of global versus local relationships
 
 
@@ -300,30 +1558,6 @@ gam_anom_adultTF_sst <- update(gam_anom_adultTF_baseline,
                        . ~ . + s(sst, k = k1, bs = "ts") + ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
 summary(gam_anom_adultTF_sst)
 
-gam_anom_adultTF_mldG <- update(gam_anom_adultTF_baseline,
-                       . ~ . + s(mld, k = k1, bs = "ts"))
-summary(gam_anom_adultTF_mldG)
-
-gam_anom_adultTF_mldV <- update(gam_anom_adultTF_baseline,
-                       . ~ . + ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
-summary(gam_anom_adultTF_mldV)
-
-gam_anom_adultTF_mld <- update(gam_anom_adultTF_baseline,
-                       . ~ . + s(mld, k = k1, bs = "ts") + ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
-summary(gam_anom_adultTF_mld)
-
-gam_anom_adultTF_zeuG <- update(gam_anom_adultTF_baseline,
-                       . ~ . + s(zeu, k = k1, bs = "ts"))
-summary(gam_anom_adultTF_zeuG)
-
-gam_anom_adultTF_zeuV <- update(gam_anom_adultTF_baseline,
-                       . ~ . + ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
-summary(gam_anom_adultTF_zeuV)
-
-gam_anom_adultTF_zeu <- update(gam_anom_adultTF_baseline,
-                       . ~ . + s(zeu, k = k1, bs = "ts") + ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
-summary(gam_anom_adultTF_zeu)
-
 gam_anom_adultTF_ppG <- update(gam_anom_adultTF_baseline,
                        . ~ . + s(pp, k = k1, bs = "ts"))
 summary(gam_anom_adultTF_ppG)
@@ -335,30 +1569,6 @@ summary(gam_anom_adultTF_ppV)
 gam_anom_adultTF_pp <- update(gam_anom_adultTF_baseline,
                        . ~ . + s(pp, k = k1, bs = "ts") + ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
 summary(gam_anom_adultTF_pp)
-
-gam_anom_adultTF_uoG <- update(gam_anom_adultTF_baseline,
-                       . ~ . + s(uo, k = k1, bs = "ts"))
-summary(gam_anom_adultTF_uoG)
-
-gam_anom_adultTF_uoV <- update(gam_anom_adultTF_baseline,
-                       . ~ . + ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
-summary(gam_anom_adultTF_uoV)
-
-gam_anom_adultTF_uo <- update(gam_anom_adultTF_baseline,
-                       . ~ . + s(uo, k = k1, bs = "ts") + ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
-summary(gam_anom_adultTF_uo)
-
-gam_anom_adultTF_voG <- update(gam_anom_adultTF_baseline,
-                       . ~ . + s(vo, k = k1, bs = "ts"))
-summary(gam_anom_adultTF_voG)
-
-gam_anom_adultTF_voV <- update(gam_anom_adultTF_baseline,
-                       . ~ . + ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
-summary(gam_anom_adultTF_voV)
-
-gam_anom_adultTF_vo <- update(gam_anom_adultTF_baseline,
-                       . ~ . + s(vo, k = k1, bs = "ts") + ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2))
-summary(gam_anom_adultTF_vo)
 
 
 ```
@@ -525,7 +1735,7 @@ anom$season_num <- ifelse(anom$season == "DJF", 1,
 baseline_terms <- "s(lon,lat,bs='ds',k=200) + s(season_num,bs='cc',k=4)"
 
 predictors <- c(
-  "sst","zeu","mld","uo","vo","pp",
+  "sst", "pp",
   "T_L1","T_L2","T_L3",
   "U_L1","U_L2","U_L3",
   "V_L1","V_L2","V_L3",

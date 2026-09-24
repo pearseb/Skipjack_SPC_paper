@@ -56,6 +56,8 @@ Load libraries
 
 library(mgcv)
 library(parallel)
+setwd("/g/data/es60/SEAPODYM/pearse_GAMs")
+getwd()
 
 ```
 
@@ -63,18 +65,18 @@ Check assumptions of linearity for larvae
 
 ```{r}
 
-lm_abso_larvae <- lm(larvae_biomass ~ sst + mld + zeu + pp + uo + vo + U_L1 + U_L2 + U_L3 + V_L1 + V_L2 + V_L3 + O2_L1 + O2_L2 + O2_L3 + T_L1 + T_L2 + T_L3, data=abso)
+lm_abso_larvae <- lm(larvae_biomass ~ sst + pp + U_L1 + U_L2 + U_L3 + V_L1 + V_L2 + V_L3 + O2_L1 + O2_L2 + O2_L3 + T_L1 + T_L2 + T_L3, data=abso)
 summary(lm_abso_larvae)
 
-lm_anom_larvae <- lm(larvae_biomass ~ sst + mld + zeu + pp + uo + vo + U_L1 + U_L2 + U_L3 + V_L1 + V_L2 + V_L3 + O2_L1 + O2_L2 + O2_L3 + T_L1 + T_L2 + T_L3, data=anom)
+lm_anom_larvae <- lm(larvae_biomass ~ sst + pp + U_L1 + U_L2 + U_L3 + V_L1 + V_L2 + V_L3 + O2_L1 + O2_L2 + O2_L3 + T_L1 + T_L2 + T_L3, data=anom)
 summary(lm_anom_larvae)
 
-png("figures/lm_abso_larvae_diagnostics.png", width = 1600, height = 1200, res = 200, type = "cairo")
+png("/g/data/es60/SEAPODYM/pearse_GAMs/figures/lm_abso_larvae_diagnostics.png", width = 1600, height = 1200, res = 200, type = "cairo")
 op <- par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
 plot(lm_abso_larvae, pch = ".", cex = 0.3, id.n = 0)
 par(op); dev.off()
 
-png("figures/lm_anom_larvae_diagnostics.png", width = 1600, height = 1200, res = 200, type = "cairo")
+png("/g/data/es60/SEAPODYM/pearse_GAMs/figures/lm_anom_larvae_diagnostics.png", width = 1600, height = 1200, res = 200, type = "cairo")
 op <- par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
 plot(lm_anom_larvae, pch = ".", cex = 0.3, id.n = 0)
 par(op); dev.off()
@@ -85,48 +87,51 @@ par(op); dev.off()
 Raw larval biomass (absolute): R2 = 0.61
 Raw larval biomass (anomaly): R2 = 0.47
 
+without MLD, Zeu, U and V: R2 = 0.573 
+without MLD, Zeu, U and V: R2 = 0.446 
+
 Try a transformation of the biomass
 
 ```{r}
 
-lm_abso_larvaeTF <- lm(larvae_biomass_TF ~ sst + mld + zeu + pp + uo + vo + U_L1 + U_L2 + U_L3 + V_L1 + V_L2 + V_L3 + O2_L1 + O2_L2 + O2_L3 + T_L1 + T_L2 + T_L3, data=abso)
+lm_abso_larvaeTF <- lm(larvae_biomass_TF ~ sst + pp + U_L1 + U_L2 + U_L3 + V_L1 + V_L2 + V_L3 + O2_L1 + O2_L2 + O2_L3 + T_L1 + T_L2 + T_L3, data=abso)
 summary(lm_abso_larvaeTF)
 
-lm_anom_larvaeTF <- lm(larvae_biomass_TF ~ sst + mld + zeu + pp + uo + vo + U_L1 + U_L2 + U_L3 + V_L1 + V_L2 + V_L3 + O2_L1 + O2_L2 + O2_L3 + T_L1 + T_L2 + T_L3, data=anom)
+lm_anom_larvaeTF <- lm(larvae_biomass_TF ~ sst + pp + U_L1 + U_L2 + U_L3 + V_L1 + V_L2 + V_L3 + O2_L1 + O2_L2 + O2_L3 + T_L1 + T_L2 + T_L3, data=anom)
 summary(lm_anom_larvaeTF)
 
-png("figures/lm_abso_larvaeTF_diagnostics.png", width = 1600, height = 1200, res = 200, type = "cairo")
+png("/g/data/es60/SEAPODYM/pearse_GAMs/figures/lm_abso_larvaeTF_diagnostics.png", width = 1600, height = 1200, res = 200, type = "cairo")
 op <- par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
 plot(lm_abso_larvaeTF, pch = ".", cex = 0.3, id.n = 0)
 par(op); dev.off()
 
-png("figures/lm_anom_larvaeTF_diagnostics.png", width = 1600, height = 1200, res = 200, type = "cairo")
+png("/g/data/es60/SEAPODYM/pearse_GAMs/figures/lm_anom_larvaeTF_diagnostics.png", width = 1600, height = 1200, res = 200, type = "cairo")
 op <- par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
 plot(lm_anom_larvaeTF, pch = ".", cex = 0.3, id.n = 0)
 par(op); dev.off()
 
 ```
 
-+1 Log10 transformed larval biomass (absolute): R2 = 0.92
-+1 Log10 transformed larval biomass (anomaly): R2 = 0.64
++1 Log10 transformed larval biomass (absolute): R2 = 0.92. (0.92 without MLD, Zeu, U and V)
++1 Log10 transformed larval biomass (anomaly): R2 = 0.64.  (0.63 without MLD, Zeu, U and V)
 
 Juveniles
 
 ```{r}
 
 
-lm_abso_juvenileTF <- lm(juvenile_biomass_TF ~ sst + mld + zeu + pp + uo + vo + U_L1 + U_L2 + U_L3 + V_L1 + V_L2 + V_L3 + O2_L1 + O2_L2 + O2_L3 + T_L1 + T_L2 + T_L3, data=abso)
+lm_abso_juvenileTF <- lm(juvenile_biomass_TF ~ sst + pp + U_L1 + U_L2 + U_L3 + V_L1 + V_L2 + V_L3 + O2_L1 + O2_L2 + O2_L3 + T_L1 + T_L2 + T_L3, data=abso)
 summary(lm_abso_juvenileTF)
 
-lm_anom_juvenileTF <- lm(juvenile_biomass_TF ~ sst + mld + zeu + pp + uo + vo + U_L1 + U_L2 + U_L3 + V_L1 + V_L2 + V_L3 + O2_L1 + O2_L2 + O2_L3 + T_L1 + T_L2 + T_L3, data=anom)
+lm_anom_juvenileTF <- lm(juvenile_biomass_TF ~ sst + pp + U_L1 + U_L2 + U_L3 + V_L1 + V_L2 + V_L3 + O2_L1 + O2_L2 + O2_L3 + T_L1 + T_L2 + T_L3, data=anom)
 summary(lm_anom_juvenileTF)
 
-png("figures/lm_abso_juvenileTF_diagnostics.png", width = 1600, height = 1200, res = 200, type = "cairo")
+png("/g/data/es60/SEAPODYM/pearse_GAMs/figures/lm_abso_juvenileTF_diagnostics.png", width = 1600, height = 1200, res = 200, type = "cairo")
 op <- par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
 plot(lm_abso_juvenileTF, pch = ".", cex = 0.3, id.n = 0)
 par(op); dev.off()
 
-png("figures/lm_anom_juvenileTF_diagnostics.png", width = 1600, height = 1200, res = 200, type = "cairo")
+png("/g/data/es60/SEAPODYM/pearse_GAMs/figures/lm_anom_juvenileTF_diagnostics.png", width = 1600, height = 1200, res = 200, type = "cairo")
 op <- par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
 plot(lm_anom_juvenileTF, pch = ".", cex = 0.3, id.n = 0)
 par(op); dev.off()
@@ -134,34 +139,34 @@ par(op); dev.off()
 
 ```
 
-+1.0 Log10 transformed juvenile biomass (absolute): R2 = 0.84
-+1.0 Log10 transformed juvenile biomass (anomaly): R2 = 0.42
++1.0 Log10 transformed juvenile biomass (absolute): R2 = 0.84.  (0.83 without MLD, Zeu, U and V)
++1.0 Log10 transformed juvenile biomass (anomaly): R2 = 0.42.   (0.42 without MLD, Zeu, U and V)
 
 Adults
 
 
 ```{r}
 
-lm_abso_adultTF <- lm(adult_biomass_TF ~ sst + mld + zeu + pp + uo + vo + U_L1 + U_L2 + U_L3 + V_L1 + V_L2 + V_L3 + O2_L1 + O2_L2 + O2_L3 + T_L1 + T_L2 + T_L3, data=abso)
+lm_abso_adultTF <- lm(adult_biomass_TF ~ sst + pp + U_L1 + U_L2 + U_L3 + V_L1 + V_L2 + V_L3 + O2_L1 + O2_L2 + O2_L3 + T_L1 + T_L2 + T_L3, data=abso)
 summary(lm_abso_adultTF)
 
-lm_anom_adultTF <- lm(adult_biomass_TF ~ sst + mld + zeu + pp + uo + vo + U_L1 + U_L2 + U_L3 + V_L1 + V_L2 + V_L3 + O2_L1 + O2_L2 + O2_L3 + T_L1 + T_L2 + T_L3, data=anom)
+lm_anom_adultTF <- lm(adult_biomass_TF ~ sst + pp + U_L1 + U_L2 + U_L3 + V_L1 + V_L2 + V_L3 + O2_L1 + O2_L2 + O2_L3 + T_L1 + T_L2 + T_L3, data=anom)
 summary(lm_anom_adultTF)
 
-png("figures/lm_abso_adultTF_diagnostics.png", width = 1600, height = 1200, res = 200, type = "cairo")
+png("/g/data/es60/SEAPODYM/pearse_GAMs/figures/lm_abso_adultTF_diagnostics.png", width = 1600, height = 1200, res = 200, type = "cairo")
 op <- par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
 plot(lm_abso_adultTF, pch = ".", cex = 0.3, id.n = 0)
 par(op); dev.off()
 
-png("figures/lm_anom_adultTF_diagnostics.png", width = 1600, height = 1200, res = 200, type = "cairo")
+png("/g/data/es60/SEAPODYM/pearse_GAMs/figures/lm_anom_adultTF_diagnostics.png", width = 1600, height = 1200, res = 200, type = "cairo")
 op <- par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
 plot(lm_anom_adultTF, pch = ".", cex = 0.3, id.n = 0)
 par(op); dev.off()
 
 ```
 
-+1.0 Log10 transformed adult biomass (absolute): R2 = 0.42
-+1.0 Log10 transformed adult biomass (anomaly): R2 = 0.08
++1.0 Log10 transformed adult biomass (absolute): R2 = 0.42. (0.40 without MLD, Zeu, U and V)
++1.0 Log10 transformed adult biomass (anomaly): R2 = 0.08.  (0.08 without MLD, Zeu, U and V)
 
 
 
@@ -188,10 +193,6 @@ gam_abso_larvaeTF_all <- bam(
   larvae_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -207,10 +208,6 @@ gam_abso_larvaeTF_all <- bam(
     s(O2_L3, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -236,10 +233,6 @@ gam_anom_larvaeTF_all <- bam(
   larvae_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -255,10 +248,6 @@ gam_anom_larvaeTF_all <- bam(
     s(O2_L3, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -282,15 +271,15 @@ summary(gam_anom_larvaeTF_all)
 
 ```
 
-GAM of transformed larval biomass (absolute) with all oceanographic predictors: R2 = 0.978
-GAM of transformed larval biomass (anomaly) with all oceanographic predictors: R2 = 0.756
+GAM of transformed larval biomass (absolute) with all oceanographic predictors: R2 = 0.978. (0.976 without MLD, Zeu, U and V)
+GAM of transformed larval biomass (anomaly) with all oceanographic predictors: R2 = 0.756.  (0.744 without MLD, Zeu, U and V)
 
 Save GAMs
 
 ```{r}
 
-saveRDS(gam_abso_larvaeTF_all, file = "./gams/gam_abso_larvaeTF_all.rds")
-saveRDS(gam_anom_larvaeTF_all, file = "./gams/gam_anom_larvaeTF_all.rds")
+saveRDS(gam_abso_larvaeTF_all, file = "/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_larvaeTF.rds")
+saveRDS(gam_anom_larvaeTF_all, file = "/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_larvaeTF.rds")
 
 
 ```
@@ -299,8 +288,8 @@ Load GAMs
 
 ```{r}
 
-gam_abso_larvaeTF_all <- readRDS("./gams/gam_abso_larvaeTF_all.rds")
-gam_anom_larvaeTF_all <- readRDS("./gams/gam_anom_larvaeTF_all.rds")
+gam_abso_larvaeTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_larvaeTF.rds")
+gam_anom_larvaeTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_larvaeTF.rds")
 
 ```
 
@@ -312,10 +301,6 @@ gam_abso_juvenileTF_all <- bam(
   juvenile_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -331,10 +316,6 @@ gam_abso_juvenileTF_all <- bam(
     s(O2_L3, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -360,10 +341,6 @@ gam_abso_juvenileTF_allL <- bam(
   juvenile_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -380,10 +357,6 @@ gam_abso_juvenileTF_allL <- bam(
     s(larvae_biomass_TF, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -410,10 +383,6 @@ gam_anom_juvenileTF_all <- bam(
   juvenile_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -429,10 +398,6 @@ gam_anom_juvenileTF_all <- bam(
     s(O2_L3, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -458,10 +423,6 @@ gam_anom_juvenileTF_allL <- bam(
   juvenile_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -478,10 +439,6 @@ gam_anom_juvenileTF_allL <- bam(
     s(larvae_biomass_TF, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -507,18 +464,18 @@ summary(gam_anom_juvenileTF_allL)
 
 ```
 
-GAM of transformed juvenile biomass (absolute) with all oceanographic predictors: R2 = 0.94
-GAM of transformed juvenile biomass (absolute) with all oceanographic predictors + larvae: R2 = 0.97
-GAM of transformed juvenile biomass (anomaly) with all oceanographic predictors: R2 = 0.53
-GAM of transformed juvenile biomass (anomaly) with all oceanographic predictors + larvae: R2 = 0.69
+GAM of transformed juvenile biomass (absolute) with all oceanographic predictors: R2 = 0.94.           (0.932 without MLD, Zeu, U and V)
+GAM of transformed juvenile biomass (absolute) with all oceanographic predictors + larvae: R2 = 0.97   (0.966 without MLD, Zeu, U and V)
+GAM of transformed juvenile biomass (anomaly) with all oceanographic predictors: R2 = 0.53             (0.519 without MLD, Zeu, U and V)
+GAM of transformed juvenile biomass (anomaly) with all oceanographic predictors + larvae: R2 = 0.69    (0.679 without MLD, Zeu, U and V)
 
 
 ```{r}
 
-saveRDS(gam_abso_juvenileTF_all, file = "gam_abso_juvenileTF_all.rds")
-saveRDS(gam_abso_juvenileTF_allL, file = "gam_abso_juvenileTF_allL.rds")
-saveRDS(gam_anom_juvenileTF_all, file = "gam_anom_juvenileTF_all.rds")
-saveRDS(gam_anom_juvenileTF_allL, file = "gam_anom_juvenileTF_allL.rds")
+saveRDS(gam_abso_juvenileTF_all, file = "/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_juvenileTF.rds")
+saveRDS(gam_abso_juvenileTF_allL, file = "/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_juvenileTF_L.rds")
+saveRDS(gam_anom_juvenileTF_all, file = "/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_juvenileTF.rds")
+saveRDS(gam_anom_juvenileTF_allL, file = "/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_juvenileTF_L.rds")
 
 ```
 
@@ -526,10 +483,10 @@ Load GAMs
 
 ```{r}
 
-gam_abso_juvenileTF_all <- readRDS("gam_abso_juvenileTF_all.rds")
-gam_abso_juvenileTF_allL <- readRDS("gam_abso_juvenileTF_allL.rds")
-gam_anom_juvenileTF_all <- readRDS("gam_anom_juvenileTF_all.rds")
-gam_anom_juvenileTF_allL <- readRDS("gam_anom_juvenileTF_allL.rds")
+gam_abso_juvenileTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_juvenileTF.rds")
+gam_abso_juvenileTF_allL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_juvenileTF_L.rds")
+gam_anom_juvenileTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_juvenileTF.rds")
+gam_anom_juvenileTF_allL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_juvenileTF_L.rds")
 
 
 ```
@@ -551,10 +508,6 @@ gam_abso_juvenileTF_allpL <- bam(
   juvenile_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -571,10 +524,6 @@ gam_abso_juvenileTF_allpL <- bam(
     s(larvae_biomass_TFpred_all, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -602,10 +551,6 @@ gam_anom_juvenileTF_allpL <- bam(
   juvenile_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -622,10 +567,6 @@ gam_anom_juvenileTF_allpL <- bam(
     s(larvae_biomass_TFpred_all, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -652,22 +593,22 @@ summary(gam_anom_juvenileTF_allpL)
 ```
 
 
-GAM of transformed juvenile biomass (absolute) with all oceanographic predictors + predicted larvae: R2 = 0.94
-GAM of transformed juvenile biomass (anomaly) with all oceanographic predictors + predicted larvae: R2 = 0.54
+GAM of transformed juvenile biomass (absolute) with all oceanographic predictors + predicted larvae: R2 = 0.94   (0.935 without MLD, Zeu, U and V)
+GAM of transformed juvenile biomass (anomaly) with all oceanographic predictors + predicted larvae: R2 = 0.54.   (0.53 without MLD, Zeu, U and V)
 
 
 ```{r}
 
-saveRDS(gam_abso_juvenileTF_allpL, file = "gam_abso_juvenileTF_allpL.rds")
-saveRDS(gam_anom_juvenileTF_allpL, file = "gam_anom_juvenileTF_allpL.rds")
+saveRDS(gam_abso_juvenileTF_allpL, file = "/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_juvenileTF_pL.rds")
+saveRDS(gam_anom_juvenileTF_allpL, file = "/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_juvenileTF_pL.rds")
 
 ```
 
 
 ```{r}
 
-gam_abso_juvenileTF_allpL <- readRDS("gam_abso_juvenileTF_allpL.rds")
-gam_anom_juvenileTF_allpL <- readRDS("gam_anom_juvenileTF_allpL.rds")
+gam_abso_juvenileTF_allpL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_juvenileTF_pL.rds")
+gam_anom_juvenileTF_allpL <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_juvenileTF_pL.rds")
 
 ```
 
@@ -728,10 +669,10 @@ summary(gam_anom_juvenileTF_pL)
 ```
 
 
-GAM of transformed juvenile biomass (absolute) with larvae: R2 = 0.94
-GAM of transformed juvenile biomass (absolute) with predicted larvae from all oceanography: R2 = 0.90
-GAM of transformed juvenile biomass (anomaly) with larvae: R2 = 0.64
-GAM of transformed juvenile biomass (anomaly) with predicted larvae from all oceanography: R2 = 0.49
+GAM of transformed juvenile biomass (absolute) with larvae: R2 = 0.94                                   (0.94 without MLD, Zeu, U and V)
+GAM of transformed juvenile biomass (absolute) with predicted larvae from all oceanography: R2 = 0.90.  (0.90 without MLD, Zeu, U and V)
+GAM of transformed juvenile biomass (anomaly) with larvae: R2 = 0.64                                    (0.637 without MLD, Zeu, U and V)
+GAM of transformed juvenile biomass (anomaly) with predicted larvae from all oceanography: R2 = 0.49.   (0.491 without MLD, Zeu, U and V)
 
 Adults
 
@@ -741,10 +682,6 @@ gam_abso_adultTF_all <- bam(
   adult_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -760,10 +697,6 @@ gam_abso_adultTF_all <- bam(
     s(O2_L3, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -789,10 +722,6 @@ gam_abso_adultTF_allJ <- bam(
   adult_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -809,10 +738,6 @@ gam_abso_adultTF_allJ <- bam(
     s(juvenile_biomass_TF, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -839,10 +764,6 @@ gam_anom_adultTF_all <- bam(
   adult_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -858,10 +779,6 @@ gam_anom_adultTF_all <- bam(
     s(O2_L3, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -887,10 +804,6 @@ gam_anom_adultTF_allJ <- bam(
   adult_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -907,10 +820,6 @@ gam_anom_adultTF_allJ <- bam(
     s(juvenile_biomass_TF, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -936,27 +845,27 @@ summary(gam_anom_adultTF_allJ)
 
 ```
 
-GAM of transformed adult biomass (absolute) with all oceanographic predictors: R2 = 0.81
-GAM of transformed adult biomass (absolute) with all oceanographic predictors + juveniles: R2 = 0.84
-GAM of transformed adult biomass (anomaly) with all oceanographic predictors: R2 = 0.29
-GAM of transformed adult biomass (anomaly) with all oceanographic predictors + juveniles: R2 = 0.37
+GAM of transformed adult biomass (absolute) with all oceanographic predictors: R2 = 0.81              (0.806 without MLD, Zeu, U and V)
+GAM of transformed adult biomass (absolute) with all oceanographic predictors + juveniles: R2 = 0.84. (0.834 without MLD, Zeu, U and V)
+GAM of transformed adult biomass (anomaly) with all oceanographic predictors: R2 = 0.29               (0.268 without MLD, Zeu, U and V)
+GAM of transformed adult biomass (anomaly) with all oceanographic predictors + juveniles: R2 = 0.37   (0.344 without MLD, Zeu, U and V)
 
 
 ```{r}
 
-saveRDS(gam_abso_adultTF_all, file = "gam_abso_adultTF_all.rds")
-saveRDS(gam_abso_adultTF_allJ, file = "gam_abso_adultTF_allJ.rds")
-saveRDS(gam_anom_adultTF_all, file = "gam_anom_adultTF_all.rds")
-saveRDS(gam_anom_adultTF_allJ, file = "gam_anom_adultTF_allJ.rds")
+saveRDS(gam_abso_adultTF_all, file = "/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_adultTF.rds")
+saveRDS(gam_abso_adultTF_allJ, file = "/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_adultTF_J.rds")
+saveRDS(gam_anom_adultTF_all, file = "/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_adultTF.rds")
+saveRDS(gam_anom_adultTF_allJ, file = "/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_adultTF_J.rds")
 
 ```
 
 ```{r}
 
-gam_abso_adultTF_all <- readRDS("gam_abso_adultTF_all.rds")
-gam_abso_adultTF_allJ <- readRDS("gam_abso_adultTF_allJ.rds")
-gam_anom_adultTF_all <- readRDS("gam_anom_adultTF_all.rds")
-gam_anom_adultTF_allJ <- readRDS("gam_anom_adultTF_allJ.rds")
+gam_abso_adultTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_adultTF.rds")
+gam_abso_adultTF_allJ <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_adultTF_J.rds")
+gam_anom_adultTF_all <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_adultTF.rds")
+gam_anom_adultTF_allJ <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_adultTF_J.rds")
 
 ```
 
@@ -975,10 +884,6 @@ gam_abso_adultTF_allpJ <- bam(
   adult_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -995,10 +900,6 @@ gam_abso_adultTF_allpJ <- bam(
     s(juvenile_biomass_TFpred_all, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -1025,10 +926,6 @@ gam_anom_adultTF_allpJ <- bam(
   adult_biomass_TF ~ 
     # main effects (nonlinear, global)
     s(sst, k=k1, bs="ts") + 
-    s(mld, k=k1, bs="ts") +
-    s(zeu, k=k1, bs="ts") +
-    s(uo, k=k1, bs="ts") +
-    s(vo, k=k1, bs="ts") +
     s(pp, k=k1, bs="ts") +
     s(T_L1, k=k1, bs="ts") +
     s(T_L2, k=k1, bs="ts") +
@@ -1045,10 +942,6 @@ gam_anom_adultTF_allpJ <- bam(
     s(juvenile_biomass_TFpred_all, k=k1, bs="ts") +
     # space-varying effects
     ti(sst, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(mld, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(zeu, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(uo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
-    ti(vo, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(pp, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L1, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
     ti(T_L2, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2) +
@@ -1074,24 +967,22 @@ summary(gam_anom_adultTF_allpJ)
 ```
 
 
-GAM of transformed adult biomass (absolute) with all oceanographic predictors + predicted juveniles: R2 = 0.82
-GAM of transformed adult biomass (anomaly) with all oceanographic predictors + predicted juveniles: R2 = 0.30
+GAM of transformed adult biomass (absolute) with all oceanographic predictors + predicted juveniles: R2 = 0.82. (0.812 without MLD, Zeu, U and V)
+GAM of transformed adult biomass (anomaly) with all oceanographic predictors + predicted juveniles: R2 = 0.30.  (0.276 without MLD, Zeu, U and V)
 
 
 ```{r}
 
-saveRDS(gam_abso_adultTF_allpJ, file = "gam_abso_adultTF_allpJ.rds")
-saveRDS(gam_anom_adultTF_allpJ, file = "gam_anom_adultTF_allpJ.rds")
+saveRDS(gam_abso_adultTF_allpJ, file = "/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_adultTF_pJ.rds")
+saveRDS(gam_anom_adultTF_allpJ, file = "/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_adultTF_pJ.rds")
 
 ```
 
 
 ```{r}
 
-gam_abso_adultTF_allpL <- readRDS("gam_abso_adultTF_allpJ.rds")
-gam_abso_adultTF_subsetpL <- readRDS("gam_abso_adultTF_subsetpJ.rds")
-gam_anom_adultTF_allpL <- readRDS("gam_anom_adultTF_allpJ.rds")
-gam_anom_adultTF_subsetpL <- readRDS("gam_anom_adultTF_subsetpJ.rds")
+gam_abso_adultTF_allpJ <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_abso_adultTF_pJ.rds")
+gam_anom_adultTF_allpJ <- readRDS("/g/data/es60/SEAPODYM/pearse_GAMs/gams/gam_anom_adultTF_pJ.rds")
 
 ```
 
@@ -1100,7 +991,7 @@ Adults ~ juveniles
 
 ```{r}
 
-gam_abso_adultTF_L <- bam(
+gam_abso_adultTF_J <- bam(
   adult_biomass_TF ~ 
     s(juvenile_biomass_TF, k=k1, bs="ts") +
     ti(juvenile_biomass_TF, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
@@ -1110,9 +1001,9 @@ gam_abso_adultTF_L <- bam(
   cluster = cl,
   gc.level = 1
 )
-summary(gam_abso_adultTF_L)
+summary(gam_abso_adultTF_J)
 
-gam_abso_adultTF_pL <- bam(
+gam_abso_adultTF_pJ <- bam(
   adult_biomass_TF ~ 
     s(juvenile_biomass_TFpred_all, k=k1, bs="ts") +
     ti(juvenile_biomass_TFpred_all, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
@@ -1122,9 +1013,9 @@ gam_abso_adultTF_pL <- bam(
   cluster = cl,
   gc.level = 1
 )
-summary(gam_abso_adultTF_pL)
+summary(gam_abso_adultTF_pJ)
 
-gam_anom_adultTF_L <- bam(
+gam_anom_adultTF_J <- bam(
   adult_biomass_TF ~ 
     s(juvenile_biomass_TF, k=k1, bs="ts") +
     ti(juvenile_biomass_TF, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
@@ -1134,9 +1025,9 @@ gam_anom_adultTF_L <- bam(
   cluster = cl,
   gc.level = 1
 )
-summary(gam_anom_adultTF_L)
+summary(gam_anom_adultTF_J)
 
-gam_anom_adultTF_pL <- bam(
+gam_anom_adultTF_pJ <- bam(
   adult_biomass_TF ~ 
     s(juvenile_biomass_TFpred_all, k=k1, bs="ts") +
     ti(juvenile_biomass_TFpred_all, lon, lat, bs=c("cr","tp","tp"), k=c(k1, 120), m=2),
@@ -1146,10 +1037,16 @@ gam_anom_adultTF_pL <- bam(
   cluster = cl,
   gc.level = 1
 )
-summary(gam_anom_adultTF_pL)
+summary(gam_anom_adultTF_pJ)
 
 
 ```
+
+
+GAM of transformed adult biomass (absolute) with actual juveniles:    R2 = 0.63.  (0.634 without MLD, Zeu, U and V)
+GAM of transformed adult biomass (absolute) with predicted juveniles: R2 = 0.64.  (0.644 without MLD, Zeu, U and V)
+GAM of transformed adult biomass (anomaly) with actual juveniles:     R2 = 0.12.  (0.122 without MLD, Zeu, U and V)
+GAM of transformed adult biomass (anomaly) with predicted juveniles:  R2 = 0.06.  (0.059 without MLD, Zeu, U and V)
 
 
 ```{r}

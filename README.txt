@@ -185,27 +185,47 @@ Fourth, I perform GAM model building in R...
 
 3. produces:
     - Table 3
-    - gam_FS5_global_T_L1.csv   -->  Global univariate relationship between transformed biomass (log10(x+1)) and T_L1 (x)
-    - gam_FS5_global_sst.csv    -->  Global univariate relationship between transformed biomass (log10(x+1)) and SST (x)
-    - gam_FS5_global_U_L3.csv   -->  Global univariate relationship between transformed biomass (log10(x+1)) and U_L3 (x)
-    - gam_FS5_global_O2_L2.csv  -->  Global univariate relationship between transformed biomass (log10(x+1)) and O2_L2 (x)
-    - gam_FS5_global_zeu.csv    -->  Global univariate relationship between transformed biomass (log10(x+1)) and zeu (x)
-    - gam_FS5_global_T_L2.csv   -->  Global univariate relationship between transformed biomass (log10(x+1)) and T_L2 (x)
-    - gam_FS5_spatial_T_L1_sd.csv   -->  Local relationships between transformed biomass (log10(x+1)) and 1 STD of T_L1 (x)
-    - gam_FS5_spatial_sst_sd.csv    -->  Local relationships between transformed biomass (log10(x+1)) and 1 STD of SST (x)
-    - gam_FS5_spatial_U_L3_sd.csv   -->  Local relationships between transformed biomass (log10(x+1)) and 1 STD of U_L3 (x)
-    - gam_FS5_spatial_O2_L2_sd.csv  -->  Local relationships between transformed biomass (log10(x+1)) and 1 STD of O2_L2 (x)
-    - gam_FS5_spatial_zeu_sd.csv    -->  Local relationships between transformed biomass (log10(x+1)) and 1 STD of zeu (x)
-    - gam_FS5_spatial_T_L2_sd.csv   -->  Local relationships between transformed biomass (log10(x+1)) and 1 STD of T_L2 (x)
-    - gam_FS5_spatial_T_L1_0.5degC.csv   -->  Local relationships between transformed biomass (log10(x+1)) and 0.5 degC of T_L1 (x)
-    - gam_FS5_spatial_sst_0.5degC.csv    -->  Local relationships between transformed biomass (log10(x+1)) and 0.5 degC of SST (x)
-    - gam_FS5_spatial_U_L3_0.025ms.csv   -->  Local relationships between transformed biomass (log10(x+1)) and 0.025 m/s of U_L3 (x)
-    - gam_FS5_spatial_O2_L2_10mmolm3.csv -->  Local relationships between transformed biomass (log10(x+1)) and 10 mmol/m3 of O2_L2 (x)
-    - gam_FS5_spatial_zeu_10m.csv        -->  Local relationships between transformed biomass (log10(x+1)) and 10 m of zeu (x)
-    - gam_FS5_spatial_T_L2_0.5degC.csv   -->  Local relationships between transformed biomass (log10(x+1)) and 0.5 degC of T_L2 (x)
-    - anomalous_values_GAM_FS5terms_WCPO.csv --> same as anomalous_values_SEAPODYM_WCPO.txt, but with predicted biomass and terms
+    - gam_larvae_FS3_global_pp.csv   -->  Global univariate relationship between transformed biomass (log10(x+1)) and pp (x)
+    - gam_larvae_FS3_global_sst.csv    -->  Global univariate relationship between transformed biomass (log10(x+1)) and SST (x)
+    - gam_larvae_FS3_global_T_L1.csv  -->  Global univariate relationship between transformed biomass (log10(x+1)) and T_L1 (x)
+    - gam_larvae_FS3_global_O2_L2.csv   -->  Global univariate relationship between transformed biomass (log10(x+1)) and O2_L2 (x)
+    - gam_larvae_FS3_spatial_pp_sd.csv   -->  Local relationships between transformed biomass (log10(x+1)) and 1 STD of pp (x)
+    - gam_larvae_FS3_spatial_sst_sd.csv    -->  Local relationships between transformed biomass (log10(x+1)) and 1 STD of SST (x)
+    - gam_larvae_FS3_spatial_T_L1_sd.csv  -->  Local relationships between transformed biomass (log10(x+1)) and 1 STD of T_L1 (x)
+    - gam_larvae_FS3_spatial_O2_L2_sd.csv   -->  Local relationships between transformed biomass (log10(x+1)) and 1 STD of O2_L2 (x)
+    - gam_larvae_FS3_spatial_pp_5mmolCm2day.csv   -->  Local relationships between transformed biomass (log10(x+1)) and 5 mmol C m-2 day-1 of pp (x)
+    - gam_larvae_FS3_spatial_sst_0.5degC.csv    -->  Local relationships between transformed biomass (log10(x+1)) and 0.5 degC of SST (x)
+    - gam_larvae_FS3_spatial_T_L1_0.5degC.csv -->  Local relationships between transformed biomass (log10(x+1)) and 0.5 degC of T_L1 (x)
+    - gam_larvae_FS3_spatial_O2_L2_10mmolm3.csv   -->  Local relationships between transformed biomass (log10(x+1)) and 10 mmol/m3 of O2_L2 (x)
+    - gam_juvenile_FS3_global_pp.csv   -->  Global univariate relationship between transformed biomass (log10(x+1)) and pp (x)
+    - gam_juvenile_FS3_global_sst.csv    -->  Global univariate relationship between transformed biomass (log10(x+1)) and SST (x)
+    - gam_juvenile_FS3_global_T_L1.csv  -->  Global univariate relationship between transformed biomass (log10(x+1)) and T_L1 (x)
+    - gam_juvenile_FS3_global_O2_L2.csv   -->  Global univariate relationship between transformed biomass (log10(x+1)) and O2_L2 (x)
+    - gam_juvenile_FS3_spatial_pp_sd.csv   -->  Local relationships between transformed biomass (log10(x+1)) and 1 STD of pp (x)
+    - gam_juvenile_FS3_spatial_sst_sd.csv    -->  Local relationships between transformed biomass (log10(x+1)) and 1 STD of SST (x)
+    - gam_juvenile_FS3_spatial_T_L1_sd.csv  -->  Local relationships between transformed biomass (log10(x+1)) and 1 STD of T_L1 (x)
+    - gam_juvenile_FS3_spatial_O2_L2_sd.csv   -->  Local relationships between transformed biomass (log10(x+1)) and 1 STD of O2_L2 (x)
+    - gam_juvenile_FS3_spatial_pp_5mmolCm2day.csv   -->  Local relationships between transformed biomass (log10(x+1)) and 5 mmol C m-2 day-1 of pp (x)
+    - gam_juvenile_FS3_spatial_sst_0.5degC.csv    -->  Local relationships between transformed biomass (log10(x+1)) and 0.5 degC of SST (x)
+    - gam_juvenile_FS3_spatial_T_L1_0.5degC.csv -->  Local relationships between transformed biomass (log10(x+1)) and 0.5 degC of T_L1 (x)
+    - gam_juvenile_FS3_spatial_O2_L2_10mmolm3.csv   -->  Local relationships between transformed biomass (log10(x+1)) and 10 mmol/m3 of O2_L2 (x)
+    - gam_adult_FS3_global_T_L1.csv   -->  Global univariate relationship between transformed biomass (log10(x+1)) and T_L1 (x)
+    - gam_adult_FS3_global_sst.csv    -->  Global univariate relationship between transformed biomass (log10(x+1)) and SST (x)
+    - gam_adult_FS3_global_O2_L2.csv  -->  Global univariate relationship between transformed biomass (log10(x+1)) and O2_L2 (x)
+    - gam_adult_FS3_global_T_L2.csv   -->  Global univariate relationship between transformed biomass (log10(x+1)) and T_L2 (x)
+    - gam_adult_FS3_spatial_T_L1_sd.csv   -->  Local relationships between transformed biomass (log10(x+1)) and 1 STD of T_L1 (x)
+    - gam_adult_FS3_spatial_sst_sd.csv    -->  Local relationships between transformed biomass (log10(x+1)) and 1 STD of SST (x)
+    - gam_adult_FS3_spatial_O2_L2_sd.csv  -->  Local relationships between transformed biomass (log10(x+1)) and 1 STD of O2_L2 (x)
+    - gam_adult_FS3_spatial_T_L2_sd.csv   -->  Local relationships between transformed biomass (log10(x+1)) and 1 STD of T_L2 (x)
+    - gam_adult_FS3_spatial_T_L1_0.5degC.csv   -->  Local relationships between transformed biomass (log10(x+1)) and 0.5 degC of T_L1 (x)
+    - gam_adult_FS3_spatial_sst_0.5degC.csv    -->  Local relationships between transformed biomass (log10(x+1)) and 0.5 degC of SST (x)
+    - gam_adult_FS3_spatial_O2_L2_10mmolm3.csv -->  Local relationships between transformed biomass (log10(x+1)) and 10 mmol/m3 of O2_L2 (x)
+    - gam_adult_FS3_spatial_T_L2_0.5degC.csv   -->  Local relationships between transformed biomass (log10(x+1)) and 0.5 degC of T_L2 (x)
+    - anomalous_larvae_GAM_FS3terms_WCPO.csv --> same as anomalous_values_SEAPODYM_WCPO.txt, but with predicted biomass and terms
+    - anomalous_juvenile_GAM_FS3terms_WCPO.csv --> same as anomalous_values_SEAPODYM_WCPO.txt, but with predicted biomass and terms
+    - anomalous_adult_GAM_FS3terms_WCPO.csv --> same as anomalous_values_SEAPODYM_WCPO.txt, but with predicted biomass and terms
    using:
-    - skipjack_GAMs_SEAPODYM_predictorimportance.Rmd
+    - skipjack_GAMs_SEAPODYM_predictorimportance_noL3.Rmd
    which reads:
     - absolute_values_SEAPODYM_WCPO.txt
     - anomalous_values_SEAPODYM_WCPO.txt
@@ -217,7 +237,7 @@ Fourth, I perform GAM model building in R...
    using:
     - ElNino_fingerprint.ipynb
    which reads:
-    - anomalous_values_GAM_FS5terms_WCPO.csv
+    - anomalous_adult_values_GAM_FS3terms_WCPO.csv
 
 
 5. produces:
@@ -229,7 +249,7 @@ Fourth, I perform GAM model building in R...
     - skipjack_GAMs_SEAPODYM_IMFs_predictions.Rmd
    which reads:
     - forcings_minus_IMFs_seasons.csv
-    - anomalous_values_SEAPODYM_WCPO.txt
+    - anomalous_adult_SEAPODYM_WCPO.txt
 
 6. produces:
     - anomalous_values_GAM_predictions_HF.nc
