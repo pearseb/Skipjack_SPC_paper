@@ -143,13 +143,13 @@ The main working directory is:
 
 Within it, the scripts expect or create directories such as:
 
-`
+```text
 pearse_GAMs/
 ├── EMD_forcings/
 ├── figures/
 ├── gams/
 └── [intermediate CSV, TXT, and NetCDF files]
-`
+```
 
 Before running elsewhere, replace the `setwd(...)` calls in the R Markdown files and the `wrkdir`/`os.chdir(...)` settings in the notebooks. Create the output directories before execution.
 
